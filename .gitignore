@@ -1,0 +1,16 @@
+/data/mongodb
+/data/mysql
+/logs/*.log
+/logs/*/*.log
+/logs/nginx/nginx.pid
+*.log.*
+/www/crm
+/php
+/mysql
+/mongodb
+/nginx
+/tmp/download/*
+/bin/.wget-hsts
+/tmp/*
+!/tmp/nginx/
+!/tmp/nginx/**/*

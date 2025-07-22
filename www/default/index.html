@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WNMMP - Windows下的绿色集成开发环境</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <style>
+        /* 自定义样式 */
+        .text-shadow {
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .section-padding {
+            padding: 6rem 0;
+        }
+        .component-icon {
+            width: 70px;
+            height: 70px;
+            line-height: 70px;
+            font-size: 2rem;
+        }
+		.fa-gitee { 
+			/* 使用提供的Gitee图标链接 */ 
+			background: url('https://e-assets.gitee.com/gitee-community-web/_next/static/media/logo-black.0c964084.svg?x-bce-process=image') no-repeat; 
+			/* 调整背景图大小和位置，只显示左侧G部分 */ 
+			background-size: 280%; background-position: 0 center; 
+			/* 标准Font Awesome图标尺寸 */
+			width: 1em; height: 1em; 
+			/* 确保图标垂直居中 */ 
+			vertical-align: middle; 
+			/* 隐藏多余部分 */ 
+			overflow: hidden; 
+			/* 作为内联块级元素显示 */ 
+			display: inline-block; 
+			/* 继承父元素字体大小，实现响应式 */ 
+			font-size: inherit; 
+		}
+		/* 可选：不同尺寸的图标变体 */
+		.fa-gitee.fa-lg {
+			font-size: 1.333em;
+			line-height: 0.75em;
+			vertical-align: -0.0667em;
+		}
+		.fa-gitee.fa-2x {
+			font-size: 2em;
+		}
+		.fa-gitee.fa-3x {
+			font-size: 3em;
+		}
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container">
+            <nav class="navbar navbar-expand-lg navbar-light py-4">
+                <div class="container-fluid">
+                    <a class="navbar-brand d-flex align-items-center" href="#">
+                        <div class="bg-primary text-white rounded-lg w-10 h-10 d-flex align-items-center justify-content-center me-3">
+                            <span class="font-bold fs-4">W</span>
+                        </div>
+                        <span class="fs-2 font-bold text-dark">WNMMP</span>
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item mx-2"><a class="nav-link" href="#about">关于</a></li>
+                            <li class="nav-item mx-2"><a class="nav-link" href="#components">组件</a></li>
+                            <li class="nav-item mx-2"><a class="nav-link" href="#features">特性</a></li>
+                            <li class="nav-item mx-2"><a class="nav-link" href="#license">许可协议</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 英雄区域 -->
+    <section class="bg-gradient-to-r from-primary to-primary/80 text-black py-16 md:py-24">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-10 text-center">
+                    <h1 class="display-3 md:display-2 font-bold mb-6 text-shadow">WNMMP 集成开发环境</h1>
+                    <p class="lead fs-5 mb-8 text-black/90 max-w-3xl mx-auto">
+                        Windows 下的绿色集成开发环境，包含 Nginx、MySQL、MongoDB 和 PHP，同时默认已经安装php_xqkeji.dll扩展（低代码开发框架），
+                        让您的 Web 开发更简单、高效。
+                    </p>
+                    <div class="d-flex flex-column sm:flex-row justify-center gap-4">
+                        <a href="#download" class="btn btn-light text-primary font-medium px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all shadow-lg">
+                            <i class="fa fa-download me-2"></i>立即下载
+                        </a>
+                        <a href="#about" class="btn btn-outline-light text-white font-medium px-8 py-3 rounded-lg hover:bg-white/10 transition-all">
+                            <i class="fa fa-info-circle me-2"></i>了解更多
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关于部分 -->
+    <section id="about" class="section-padding bg-white">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center mb-12">
+                    <h2 class="display-4 font-bold text-dark mb-4">什么是 WNMMP？</h2>
+                    <div class="w-20 h-1 bg-primary mx-auto mb-6"></div>
+                    <p class="fs-5 text-gray-600">
+                        WNMMP 是一个专为 Windows 系统设计的绿色集成开发环境，名称来源于其包含的核心组件：
+                        <span class="font-semibold text-primary">W</span>indows、<span class="font-semibold text-primary">N</span>ginx、
+                        <span class="font-semibold text-primary">M</span>ySQL、<span class="font-semibold text-primary">M</span>ongoDB 和 
+                        <span class="font-semibold text-primary">P</span>HP。
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row align-items-center gap-8">
+                <div class="col-md-6">
+                    <p class="text-gray-700 mb-4 fs-5">
+                        WNMMP 旨在为开发者提供一个开箱即用的 Web 开发环境，无需复杂的配置过程，
+                        解压后即可使用，通过点击install.bat自动去官网下载nginx、mongodb、mysql、PHP等开源组件并自动完成配置，通过点击start.bat启动各个组件的服务、点击stop.bat关闭组件服务，完美支持 PHP 开发的各种 Web 应用程序和网站。
+                    </p>
+                    <p class="text-gray-700 mb-6 fs-5">
+                        无论是个人开发者构建小型应用，还是团队协作开发大型项目，
+                        WNMMP 都能满足您的需求，让您专注于代码编写而非环境配置。
+                    </p>
+                    <div class="d-flex flex-wrap gap-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            <span>绿色免安装</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            <span>配置简单</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fa fa-check-circle text-success me-2"></i>
+                            <span>易于扩展</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="bg-light p-6 rounded-xl shadow">
+                        <div class="d-flex items-center mb-5">
+                            <div class="bg-primary/10 rounded-lg p-3 me-4">
+                                <i class="fa fa-cogs text-primary fs-2"></i>
+                            </div>
+                            <h3 class="fs-2 font-semibold">一站式开发解决方案</h3>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li class="mb-3 d-flex">
+                                <i class="fa fa-angle-right text-primary mt-1 me-3"></i>
+                                <span>无需安装，解压即可使用，不写入系统注册表</span>
+                            </li>
+                            <li class="mb-3 d-flex">
+                                <i class="fa fa-angle-right text-primary mt-1 me-3"></i>
+                                <span>轻松启动/停止各个服务组件</span>
+                            </li>
+                            <li class="mb-3 d-flex">
+                                <i class="fa fa-angle-right text-primary mt-1 me-3"></i>
+                                <span>预设优化配置，同时支持通过修改配置文件完成自定义配置参数</span>
+                            </li>
+                            
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 组件部分 -->
+    <section id="components" class="section-padding bg-light">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center mb-12">
+                    <h2 class="display-4 font-bold text-dark mb-4">核心组件</h2>
+                    <div class="w-20 h-1 bg-primary mx-auto mb-6"></div>
+                    <p class="fs-5 text-gray-600">
+                        WNMMP 集成了多种开源技术组件，为您提供完整的 Web 开发环境
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row gap-6">
+                <!-- Windows -->
+                <div class="col-md-2 col-sm-4">
+                    <div class="card card-hover text-center h-100">
+                        <div class="card-body p-5">
+                            <div class="component-icon bg-blue-100 text-blue-600 rounded-full mx-auto mb-4">
+                                <i class="fa fa-windows"></i>
+                            </div>
+                            <h3 class="card-title font-bold mb-2">Windows</h3>
+                            <p class="card-text text-gray-600">操作系统平台</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Nginx -->
+                <div class="col-md-2 col-sm-4">
+                    <div class="card card-hover text-center h-100">
+                        <div class="card-body p-5">
+                            <div class="component-icon bg-green-100 text-green-600 rounded-full mx-auto mb-4">
+                                <i class="fa fa-server"></i>
+                            </div>
+                            <h3 class="card-title font-bold mb-2">Nginx</h3>
+                            <p class="card-text text-gray-600">高性能Web服务器</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- MySQL -->
+                <div class="col-md-2 col-sm-4">
+                    <div class="card card-hover text-center h-100">
+                        <div class="card-body p-5">
+                            <div class="component-icon bg-orange-100 text-orange-600 rounded-full mx-auto mb-4">
+                                <i class="fa fa-database"></i>
+                            </div>
+                            <h3 class="card-title font-bold mb-2">MySQL</h3>
+                            <p class="card-text text-gray-600">关系型数据库</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- MongoDB -->
+                <div class="col-md-2 col-sm-4">
+                    <div class="card card-hover text-center h-100">
+                        <div class="card-body p-5">
+                            <div class="component-icon bg-green-100 text-green-700 rounded-full mx-auto mb-4">
+                                <i class="fa fa-cubes"></i>
+                            </div>
+                            <h3 class="card-title font-bold mb-2">MongoDB</h3>
+                            <p class="card-text text-gray-600">文档型数据库</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PHP -->
+                <div class="col-md-2 col-sm-4">
+                    <div class="card card-hover text-center h-100">
+                        <div class="card-body p-5">
+                            <div class="component-icon bg-indigo-100 text-indigo-600 rounded-full mx-auto mb-4">
+                                <i class="fa fa-code"></i>
+                            </div>
+                            <h3 class="card-title font-bold mb-2">PHP</h3>
+                            <p class="card-text text-gray-600">服务器端脚本语言</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 特性部分 -->
+    <section id="features" class="section-padding bg-white">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8 text-center mb-12">
+                    <h2 class="display-4 font-bold text-dark mb-4">产品特性</h2>
+                    <div class="w-20 h-1 bg-primary mx-auto mb-6"></div>
+                    <p class="fs-5 text-gray-600">
+                        WNMMP 提供了丰富的功能，让您的开发工作更加高效
+                    </p>
+                </div>
+            </div>
+            
+            <div class="row gap-8">
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 border-0 shadow">
+                        <div class="card-body p-6">
+                            <div class="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                                <i class="fa fa-rocket text-primary fs-2"></i>
+                            </div>
+                            <h3 class="card-title fs-1.5rem font-bold mb-3">快速启动</h3>
+                            <p class="card-text text-gray-600">
+                                无需繁琐的安装步骤，解压后即可使用，一键启动所有服务组件，节省您的时间。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 border-0 shadow">
+                        <div class="card-body p-6">
+                            <div class="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                                <i class="fa fa-leaf text-primary fs-2"></i>
+                            </div>
+                            <h3 class="card-title fs-1.5rem font-bold mb-3">绿色环保</h3>
+                            <p class="card-text text-gray-600">
+                                不写入系统注册表，不污染系统环境，卸载时只需删除文件夹即可，干净彻底。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 border-0 shadow">
+                        <div class="card-body p-6">
+                            <div class="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                                <i class="fa fa-sliders text-primary fs-2"></i>
+                            </div>
+                            <h3 class="card-title fs-1.5rem font-bold mb-3">灵活配置</h3>
+                            <p class="card-text text-gray-600">
+                                保留各组件的原始配置文件，支持自定义配置，满足不同项目的特殊需求。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 border-0 shadow">
+                        <div class="card-body p-6">
+                            <div class="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                                <i class="fa fa-shield text-primary fs-2"></i>
+                            </div>
+                            <h3 class="card-title fs-1.5rem font-bold mb-3">安全可靠</h3>
+                            <p class="card-text text-gray-600">
+                                基于稳定版本的开源组件构建，定期更新以修复安全漏洞，保障开发环境安全。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+      
+                
+                <div class="col-md-4">
+                    <div class="card card-hover h-100 border-0 shadow">
+                        <div class="card-body p-6">
+                            <div class="bg-primary/10 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                                <i class="fa fa-users text-primary fs-2"></i>
+                            </div>
+                            <h3 class="card-title fs-1.5rem font-bold mb-3">团队协作</h3>
+                            <p class="card-text text-gray-600">
+                                统一开发环境，减少因环境差异导致的问题，提高团队协作效率。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 许可协议部分 -->
+    <section id="license" class="section-padding bg-light">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="bg-white p-8 rounded-xl shadow">
+                        <h2 class="display-4 font-bold text-dark mb-6">许可协议</h2>
+                        <div class="w-20 h-1 bg-primary mb-8"></div>
+                        
+                        <div class="mb-6">
+                            <h3 class="fs-2 font-semibold mb-3">版权信息</h3>
+                            <p class="text-gray-700">
+                                版权所有 © <a href="https://xqkeji.cn" class="text-primary" target="_blank">xqkeji.cn</a>
+                            </p>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="fs-2 font-semibold mb-3">开源协议</h3>
+                            <p class="text-gray-700 mb-4">
+                                WNMMP 基于 <a href="http://www.apache.org/licenses/LICENSE-2.0" class="text-primary" target="_blank">Apache License 2.0</a> 开源协议发布。
+                            </p>
+                            <p class="text-gray-700">
+                                您可以自由地使用、复制、修改和分发本软件，无论是用于商业用途还是非商业用途，
+                                只需保留原始版权信息并在修改后明确标示更改。
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <h3 class="fs-2 font-semibold mb-3">第三方组件</h3>
+                            <p class="text-gray-700">
+                                WNMMP 集成的各个组件（Nginx、MySQL、MongoDB、PHP等）均有其各自的开源协议，
+                                使用时请遵守相应组件的许可条款。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 下载部分 -->
+    <section id="download" class="section-padding bg-primary text-white">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-md-8">
+                    <h2 class="display-4 font-bold mb-6">开始使用 WNMMP</h2>
+                    <p class="fs-5 mb-8">
+                        下载最新版本的 WNMMP 集成开发环境，体验便捷的 Web 开发之旅
+                    </p>
+                    <a href="#" class="btn btn-light text-primary font-medium px-8 py-3 rounded-lg hover:bg-opacity-90 transition-all shadow-lg fs-5">
+                        <i class="fa fa-download me-2"></i>下载最新版本
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-8">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-6">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-white text-primary rounded-lg w-10 h-10 d-flex align-items-center justify-content-center me-3">
+                            <span class="font-bold fs-4">W</span>
+                        </div>
+                        <span class="fs-2 font-bold">WNMMP</span>
+                    </div>
+                    <p class="text-gray-400 mb-4">
+                        Windows 下的绿色集成开发环境，让 Web 开发更简单、高效。
+                    </p>
+                    <div class="d-flex space-x-4">
+                        <a href="https://github.com/xqkeji/wnmmp" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-github fs-2"></i>
+                        </a>
+                        <a href="https://gitee.com/xqkeji/wnmmp" class="text-gray-400 hover:text-white transition-colors">
+                            <i class="fa fa-gitee fs-2"></i>
+                        </a>
+                     
+                    </div>
+                </div>
+                
+                <div class="col-md-3 mb-6">
+                    <h3 class="fs-5 font-semibold mb-4">快速链接</h3>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="#about" class="text-gray-400 hover:text-white transition-colors">关于 WNMMP</a></li>
+                        <li class="mb-2"><a href="#components" class="text-gray-400 hover:text-white transition-colors">核心组件</a></li>
+                        <li class="mb-2"><a href="#features" class="text-gray-400 hover:text-white transition-colors">产品特性</a></li>
+                        <li class="mb-2"><a href="#license" class="text-gray-400 hover:text-white transition-colors">许可协议</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-md-3">
+                    <h3 class="fs-5 font-semibold mb-4">版权信息</h3>
+                    <p class="text-gray-400 mb-2">
+                        © 2023 xqkeji.cn
+                    </p>
+                    <p class="text-gray-400">
+                        基于 Apache License 2.0 开源
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+        
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('header');
+            if (window.scrollY > 50) {
+                header.classList.add('py-2');
+                header.classList.remove('py-4');
+            } else {
+                header.classList.add('py-4');
+                header.classList.remove('py-2');
+            }
+        });
+    </script>
+</body>
+</html>
+    
