@@ -13,7 +13,7 @@
 :: limitations under the License.
 @echo off
 setlocal enabledelayedexpansion
-
+cd /d %~dp0
 REM find and stop service
 tasklist | findstr /i mongod.exe && taskkill /f /im mongod.exe
 tasklist | findstr /i mysqld.exe && taskkill /f /im mysqld.exe

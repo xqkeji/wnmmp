@@ -12,7 +12,9 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 @echo off
-
+if not exist "%DATA_DIR%\mongodb" (
+	mkdir "%DATA_DIR%\mongodb"
+)
 if not exist "%DATA_DIR%\mongodb\*.wt" (
 	start "MongoDB Server" /B "%HOME_DIR%\mongodb\bin\mongod.exe" --config %CONFIG_DIR%\mongodb\mongo.conf --dbpath %DATA_DIR%\mongodb --logpath %LOGS_DIR%\mongodb\info.log
 	timeout /t 10 /nobreak >nul

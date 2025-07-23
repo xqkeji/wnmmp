@@ -12,7 +12,9 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 @echo off
-
+if not exist "%DATA_DIR%\mysql" (
+	mkdir "%DATA_DIR%\mysql"
+)
 if not exist "%DATA_DIR%\mysql\mysql" (
     "%HOME_DIR%\mysql\bin\mysqld.exe" --defaults-file="%CONFIG_DIR%\mysql\my.ini" --datadir="%DATA_DIR%\mysql" --log-error="%LOGS_DIR%\mysql\error.log" --initialize-insecure --console
  	start "MySQL Server" /B "%HOME_DIR%\mysql\bin\mysqld.exe" --defaults-file="%CONFIG_DIR%\mysql\my.ini" --datadir="%DATA_DIR%\mysql" --log-error="%LOGS_DIR%\mysql\error.log" --console

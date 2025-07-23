@@ -12,7 +12,7 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 @echo off
-
+cd /d %~dp0
 setlocal enabledelayedexpansion
 
 set "script_dir_with_slash=%~dp0"
