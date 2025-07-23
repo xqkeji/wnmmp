@@ -12,18 +12,9 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 @echo off
-set "MYSQL_DIR=%HOME_DIR%\mysql"
+setlocal enabledelayedexpansion
+cd /d %~dp0
+for %%i in ("%~dp0..\..") do set "HOME_DIR=%%~fi"
+set "PHP_DIR=%HOME_DIR%\php"
 
-if not exist "%MYSQL_DIR%" (
-	mkdir "%MYSQL_DIR%"
-	wget.exe -O %TMP_DIR%\download\mysql.zip %MYSQL_DOWNLOAD_URL%
-	if %errorlevel% neq 0 (
-		echo "MYSQL download failed; installation is not complete."
-		rd "%MYSQL_DIR%" 2>nul
-		pause
-		exit
-	)
-	unzip -o %TMP_DIR%\download\mysql.zip -d %TMP_DIR%\download
-	xcopy "%TMP_DIR%\download\%MYSQL_ZIP_DIR%\*" "%MYSQL_DIR%" /E /H /Y /I
-)
-
+"%PHP_DIR%\php.exe" -c "%HOME_DIR%\etc\php\php.ini" "%HOME_DIR%\bin\composer\composer.phar" %*

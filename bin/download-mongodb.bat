@@ -17,7 +17,19 @@ set "MONGODB_DIR=%HOME_DIR%\mongodb"
 if not exist "%MONGODB_DIR%" (
 	mkdir "%MONGODB_DIR%"
 	wget.exe -O %TMP_DIR%\download\mongodb.zip %MONGODB_DOWNLOAD_URL%
+	if %errorlevel% neq 0 (
+		echo "MongoDB download failed; installation is not complete."
+		rd "%MONGODB_DIR%" 2>nul
+		pause
+		exit
+	)
 	wget.exe -O %TMP_DIR%\download\mongosh.zip %MONGOSH_DOWNLOAD_URL%
+	if %errorlevel% neq 0 (
+		echo "MongoSH download failed; installation is not complete."
+		rd "%MONGODB_DIR%" 2>nul
+		pause
+		exit
+	)
 	unzip -o %TMP_DIR%\download\mongodb.zip -d %TMP_DIR%\download
 	unzip -o %TMP_DIR%\download\mongosh.zip -d %TMP_DIR%\download
 	xcopy "%TMP_DIR%\download\%MONGODB_ZIP_DIR%\*" "%MONGODB_DIR%" /E /H /Y /I
