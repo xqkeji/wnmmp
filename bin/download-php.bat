@@ -40,9 +40,17 @@ if not exist "%PHP_DIR%" (
 	unzip -o %TMP_DIR%\download\php-psr.zip -d %TMP_DIR%\download\php-psr
 	copy "%TMP_DIR%\download\php-psr\php_psr.dll" "%PHP_EXT_DIR%" /Y
 	
+	REM php_zephir_parser.dll
+	wget.exe -O %TMP_DIR%\download\php-xqkeji.zip %PHP_ZEPHIR_PARSER_DOWNLOAD_URL%
+	unzip -o %TMP_DIR%\download\php-zephir-parser.zip -d %TMP_DIR%\download
+	copy "%TMP_DIR%\download\php-zephir-parser\php_zephir_parser.dll" "%PHP_EXT_DIR%" /Y
+	
 	REM php_xqkeji.dll
 	wget.exe -O %TMP_DIR%\download\php-xqkeji.zip %PHP_XQKEJI_DOWNLOAD_URL%
 	unzip -o %TMP_DIR%\download\php-xqkeji.zip -d %TMP_DIR%\download
 	copy "%TMP_DIR%\download\%PHP_XQKEJI_ZIP_DIR%\php_xqkeji.dll" "%PHP_EXT_DIR%" /Y
+	
+	REM composer
+	call "bin\download-composer.bat"
 )
 

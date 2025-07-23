@@ -25,4 +25,3 @@ mongodb-8.0.11、mongosh-2.5.5、mysql-8.4.5、nginx-1.28.0、php-8.4.10
 
 （7）取消开机自动启动：右键uninstall_service.bat“以管理员身份运行”，可以取消安装的服务，下次开机不会自动运行。
 
-
