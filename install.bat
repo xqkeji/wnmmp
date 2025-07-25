@@ -30,7 +30,7 @@ set LOGS_DIR=%HOME_DIR%\logs
 set TMP_DIR=%HOME_DIR%\tmp
 set DOWNLOAD_DIR=%TMP_DIR%\download
 
-call "bin\check-vc-redist.bat"
+call "bin\install-vc-redist.bat"
 call "bin\download.bat"
 REM mongodb init
 call "bin\init-mongodb.bat"

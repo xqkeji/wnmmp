@@ -17,7 +17,7 @@ set "NGINX_DIR=%HOME_DIR%\nginx"
 if not exist "%NGINX_DIR%" (
 	mkdir "%NGINX_DIR%"
 	wget.exe -O %TMP_DIR%\download\nginx.zip %NGINX_DOWNLOAD_URL%
-	if %errorlevel% neq 0 (
+	if !errorlevel! neq 0 (
 		echo "NGINX download failed; installation is not complete."
 		rd "%NGINX_DIR%" 2>nul
 		pause
