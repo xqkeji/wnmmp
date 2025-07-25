@@ -13,26 +13,45 @@
 :: limitations under the License.
 @echo off
 set "MONGODB_DIR=%HOME_DIR%\mongodb"
-
+set "MONGODB_IS_OLD=0"
+set "MONGOSH_IS_OLD=0"
 if not exist "%MONGODB_DIR%" (
 	mkdir "%MONGODB_DIR%"
 	wget.exe -O %TMP_DIR%\download\mongodb.zip %MONGODB_DOWNLOAD_URL%
 	if %errorlevel% neq 0 (
-		echo "MongoDB download failed; installation is not complete."
-		rd "%MONGODB_DIR%" 2>nul
-		pause
-		exit
+		echo "MongoDB8.0.11 download failed; installation is not complete.will try download Mongodb7.0.22"
+		wget.exe -O %TMP_DIR%\download\mongodb.zip %MONGODB_OLD_DOWNLOAD_URL%
+		if %errorlevel% neq 0 (
+			rd "%MONGODB_DIR%" 2>nul
+			pause
+			exit
+		)else(
+			set "MONGODB_IS_OLD=1"
+		)
 	)
 	wget.exe -O %TMP_DIR%\download\mongosh.zip %MONGOSH_DOWNLOAD_URL%
 	if %errorlevel% neq 0 (
-		echo "MongoSH download failed; installation is not complete."
-		rd "%MONGODB_DIR%" 2>nul
-		pause
-		exit
+		echo "MongoSH2.5.6 download failed; installation is not complete.will try download MongoSH1.10.6"
+		if %errorlevel% neq 0 (
+			rd "%MONGODB_DIR%" 2>nul
+			pause
+			exit
+		)else(
+			set "MONGOSH_IS_OLD=1"
+		)
 	)
 	unzip -o %TMP_DIR%\download\mongodb.zip -d %TMP_DIR%\download
 	unzip -o %TMP_DIR%\download\mongosh.zip -d %TMP_DIR%\download
-	xcopy "%TMP_DIR%\download\%MONGODB_ZIP_DIR%\*" "%MONGODB_DIR%" /E /H /Y /I
-	copy "%TMP_DIR%\download\%MONGOSH_ZIP_DIR%\bin\mongosh.exe" "%MONGODB_DIR%\bin\mongosh.exe" /Y
+	if !MONGODB_IS_OLD! eq 0 (
+		xcopy "%TMP_DIR%\download\%MONGODB_ZIP_DIR%\*" "%MONGODB_DIR%" /E /H /Y /I
+	)else(
+		xcopy "%TMP_DIR%\download\%MONGODB_OLD_ZIP_DIR%\*" "%MONGODB_DIR%" /E /H /Y /I
+	)
+	if !MONGOSH_IS_OLD! eq 0 (
+		copy "%TMP_DIR%\download\%MONGOSH_ZIP_DIR%\bin\mongosh.exe" "%MONGODB_DIR%\bin\mongosh.exe" /Y
+	)else(
+		copy "%TMP_DIR%\download\%MONGOSH_OLD_ZIP_DIR%\bin\mongosh.exe" "%MONGODB_DIR%\bin\mongosh.exe" /Y
+	)
+	
 )
 

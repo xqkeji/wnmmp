@@ -13,10 +13,14 @@
 :: limitations under the License.
 @echo off
 
-set MONGODB_DOWNLOAD_URL=https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-8.0.11.zip
-set MONGODB_ZIP_DIR=mongodb-win32-x86_64-windows-8.0.11
-set MONGOSH_DOWNLOAD_URL=https://downloads.mongodb.com/compass/mongosh-2.5.5-win32-x64.zip
-set MONGOSH_ZIP_DIR=mongosh-2.5.5-win32-x64
+set MONGODB_DOWNLOAD_URL=https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-8.0.12.zip
+set MONGODB_ZIP_DIR=mongodb-win32-x86_64-windows-8.0.12
+set MONGODB_OLD_DOWNLOAD_URL=https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-7.0.22.zip
+set MONGODB_OLD_ZIP_DIR=mongodb-win32-x86_64-windows-7.0.22
+set MONGOSH_DOWNLOAD_URL=https://downloads.mongodb.com/compass/mongosh-2.5.6-win32-x64.zip
+set MONGOSH_ZIP_DIR=mongosh-2.5.6-win32-x64
+set MONGOSH_OLD_DOWNLOAD_URL=https://downloads.mongodb.com/compass/mongosh-1.10.6-win32-x64.zip
+set MONGOSH_OLD_ZIP_DIR=mongosh-1.10.6-win32-x64
 set MYSQL_DOWNLOAD_URL=https://dev.mysql.com/get/Downloads/MySQL-8.4/mysql-8.4.5-winx64.zip
 set MYSQL_ZIP_DIR=mysql-8.4.5-winx64
 set NGINX_DOWNLOAD_URL=http://nginx.org/download/nginx-1.29.0.zip
