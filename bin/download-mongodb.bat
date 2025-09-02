@@ -17,10 +17,10 @@ set "MONGODB_IS_OLD=0"
 set "MONGOSH_IS_OLD=0"
 if not exist "%MONGODB_DIR%" (
 	mkdir "%MONGODB_DIR%"
-	wget.exe -O %TMP_DIR%\download\mongodb.zip %MONGODB_DOWNLOAD_URL%
+	wget.exe --no-check-certificate -O %TMP_DIR%\download\mongodb.zip %MONGODB_DOWNLOAD_URL%
 	if !errorlevel! neq 0 (
 		echo "MongoDB8.0.11 download failed; installation is not complete.will try download Mongodb7.0.22"
-		wget.exe -O %TMP_DIR%\download\mongodb.zip %MONGODB_OLD_DOWNLOAD_URL%
+		wget.exe --no-check-certificate -O %TMP_DIR%\download\mongodb.zip %MONGODB_OLD_DOWNLOAD_URL%
 		if !errorlevel! neq 0 (
 			rd "%MONGODB_DIR%" 2>nul
 			pause
@@ -29,9 +29,10 @@ if not exist "%MONGODB_DIR%" (
 			set "MONGODB_IS_OLD=1"
 		)
 	)
-	wget.exe -O %TMP_DIR%\download\mongosh.zip %MONGOSH_DOWNLOAD_URL%
+	wget.exe --no-check-certificate -O %TMP_DIR%\download\mongosh.zip %MONGOSH_DOWNLOAD_URL%
 	if !errorlevel! neq 0 (
 		echo "MongoSH2.5.6 download failed; installation is not complete.will try download MongoSH1.10.6"
+		wget.exe --no-check-certificate -O %TMP_DIR%\download\mongosh.zip %MONGOSH_OLD_DOWNLOAD_URL%
 		if !errorlevel! neq 0 (
 			rd "%MONGODB_DIR%" 2>nul
 			pause
