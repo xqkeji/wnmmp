@@ -100,7 +100,7 @@ if not exist "%PHP_DIR%" (
 	unzip -o %TMP_DIR%\download\php-xqkeji.zip -d %TMP_DIR%\download
 	copy "%TMP_DIR%\download\%PHP_XQKEJI_ZIP_DIR%\php_xqkeji.dll" "%PHP_EXT_DIR%" /Y
 	
-	REM composer
-	call "bin\init-composer.bat"
 )
 
+REM composer
+call "bin\init-composer.bat"

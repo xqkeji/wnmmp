@@ -20,10 +20,14 @@ for /f "tokens=2*" %%a in ('reg query "HKCU\Environment" /v "Path" 2^>nul') do (
 
 set "NEW_PATH=%COMPOSER_DIR%"
 
-
 if defined OLD_PATH (
-    set "UPDATED_PATH=%OLD_PATH%;%NEW_PATH%"
+	if "!OLD_PATH:%NEW_PATH%=!" neq "!OLD_PATH!" (
+		set "UPDATED_PATH=%OLD_PATH%"
+	) else (
+		set "UPDATED_PATH=%OLD_PATH%;%NEW_PATH%"
+	)  
 ) else (
     set "UPDATED_PATH=%NEW_PATH%"
 )
+
 setx PATH "%UPDATED_PATH%"
