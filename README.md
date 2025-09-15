@@ -17,7 +17,7 @@ wnmmp 提供了一系列脚本和工具来管理服务和组件。以下是主�
 - **PHP**：流行的服务器端脚本语言，适用于 Web 开发。
 
 #### 常用脚本
-- `install.bat`：运行bin目录里的“VC_redist.x64.exe”的安装程序和下载对应组件,并自动完成初始化（mongodb和mysql数据库账号默认为root，密码默认为：xqkeji.cn。）。
+- `install.bat`（要正常使用，必须先执行一次install.bat）：自动运行“VC_redist.x64.exe”的安装程序和下载对应组件,并自动完成初始化（mongodb和mysql数据库账号默认为root，密码默认为：xqkeji.cn。）。
 - `start.bat`：启动所有服务（Nginx、MySQL、MongoDB、PHP）。
 - `stop.bat`：停止所有服务。
 - `install_service.bat`：右键install_service.bat"以管理员身份运行”,可以将服务安装为 Windows 服务。
