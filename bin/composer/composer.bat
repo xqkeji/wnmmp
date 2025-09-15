@@ -13,8 +13,10 @@
 :: limitations under the License.
 @echo off
 setlocal enabledelayedexpansion
+set "ORIGINAL_DIR=%CD%"
 cd /d %~dp0
 for %%i in ("%~dp0..\..") do set "HOME_DIR=%%~fi"
 set "PHP_DIR=%HOME_DIR%\php"
+cd /d "!ORIGINAL_DIR!"
 
 "%PHP_DIR%\php.exe" -c "%HOME_DIR%\etc\php\php.ini" "%HOME_DIR%\bin\composer\composer.phar" %*
