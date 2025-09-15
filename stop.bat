@@ -12,7 +12,7 @@
 :: See the License for the specific language governing permissions and
 :: limitations under the License.
 @echo off
-
+set PATH=C:\Windows\System32;%PATH%
 REM find & stop service
 tasklist | findstr /i mongod.exe && taskkill /f /im mongod.exe
 tasklist | findstr /i mysqld.exe && taskkill /f /im mysqld.exe
