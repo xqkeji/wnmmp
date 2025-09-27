@@ -31,5 +31,5 @@ set PHP_APCU_DOWNLOAD_URL=https://downloads.php.net/~windows/pecl/releases/apcu/
 set PHP_XDEBUG_DOWNLOAD_URL=https://downloads.php.net/~windows/pecl/releases/xdebug/3.4.4/php_xdebug-3.4.4-8.4-nts-vs17-x64.zip
 set PHP_ZEPHIR_PARSER_DOWNLOAD_URL=https://downloads.php.net/~windows/pecl/releases/zephir_parser/1.7.0/php_zephir_parser-1.7.0-8.4-nts-vs17-x64.zip
 set PHP_PSR_DOWNLOAD_URL=https://downloads.php.net/~windows/pecl/releases/psr/1.2.0/php_psr-1.2.0-8.4-nts-vs17-x64.zip
-set PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/1.0.1-php8.4.zip
-set PHP_XQKEJI_ZIP_DIR=php-xqkeji-1.0.1-php8.4
+set PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/1.0.2-php8.4.zip
+set PHP_XQKEJI_ZIP_DIR=php-xqkeji-1.0.2-php8.4
