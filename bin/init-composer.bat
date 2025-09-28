@@ -31,3 +31,5 @@ if defined OLD_PATH (
 )
 
 setx PATH "%UPDATED_PATH%"
+
+call "%COMPOSER_DIR%\composer.bat" config --global use-parent-dir true
