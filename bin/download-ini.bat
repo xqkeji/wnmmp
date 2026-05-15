@@ -14,9 +14,9 @@
 @echo off
 
 set MONGODB_DOWNLOAD_URL=https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-8.3.2.zip
-set MONGODB_ZIP_DIR=mongodb-windows-x86_64-8.3.2
+set MONGODB_ZIP_DIR=mongodb-win32-x86_64-windows-8.3.2
 set MONGODB_OLD_DOWNLOAD_URL=https://fastdl.mongodb.org/windows/mongodb-windows-x86_64-5.0.33.zip
-set MONGODB_OLD_ZIP_DIR=mongodb-windows-x86_64-5.0.33
+set MONGODB_OLD_ZIP_DIR=mongodb-win32-x86_64-windows-5.0.33
 set MONGOSH_DOWNLOAD_URL=https://downloads.mongodb.com/compass/mongosh-2.8.3-win32-x64.zip
 set MONGOSH_ZIP_DIR=mongosh-2.8.3-win32-x64
 set MONGOSH_OLD_DOWNLOAD_URL=https://downloads.mongodb.com/compass/mongosh-1.10.6-win32-x64.zip
