@@ -1,4 +1,4 @@
-REM Copyright (c) xqkeji.cn. All rights reserved.
+﻿REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao
 REM Licensed under the Apache License, Version 2.0 (the "License");
 REM You may not use this file except in compliance with the License.

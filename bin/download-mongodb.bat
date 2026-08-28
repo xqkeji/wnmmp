@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao

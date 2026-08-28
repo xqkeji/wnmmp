@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 set "_PU_LABEL=%~1"
 if not defined _PU_LABEL goto :eof
 shift /1
