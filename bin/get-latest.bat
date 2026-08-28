@@ -73,7 +73,7 @@ if "!DL_OK!"=="1" (
     for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\nginx.lines") do (
       if not defined NGINX_VERSION (
         set "LN=%%l"
-        set "LN=!LN:download/nginx-=!"
+        set "LN=!LN:*download/nginx-=!"
         for /f "tokens=1,2,3 delims=.-" %%a in ("!LN!") do (
           for /f "delims=-" %%z in ("%%c") do set "NGINX_VERSION=%%a.%%b.%%z"
         )
@@ -140,7 +140,9 @@ if "!DL_OK!"=="1" (
     for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\php.lines") do (
       set "LN=%%l"
       set "LN=!LN:-nts-Win32-vs17-x64.zip=!"
-      REM LN is now like:  "path": "php-8.4.25",   (or "php-debug-pack-8.4.25",)
+      REM LN is now like:  "path": "php-8.4.25",   -> strip up to php- -> 8.4.25",
+      set "LN=!LN:*php-=!"
+      REM LN is now like:  8.4.25",   (or 8.4.25-debug-pack if a debug line slipped in)
       REM The X.Y.Z version is ALWAYS the LAST '-' segment. Take it with a
       REM last-wins loop (each iteration overwrites VER), so php-debug-pack
       REM lines yield the same 8.4.25 as the real php-8.4.25 line.
@@ -169,11 +171,11 @@ if defined PHP_VERSION (
   set "PHP_DOWNLOAD_URL=https://windows.php.net/downloads/releases/php-%PHP_VERSION%-nts-Win32-vs17-x64.zip"
   if defined XQ_PHP_MM (
     set "PHP_MM=!XQ_PHP_MM!"
-    echo [get-latest] php = %PHP_VERSION% (xqkeji php !XQ_PHP_MM!, nts/vs17/x64)
+    echo [get-latest] php = %PHP_VERSION%（xqkeji php !XQ_PHP_MM!, nts/vs17/x64）
     echo [get-latest] xqkeji 标签 = !XQ_TAG!
   ) else (
     for /f "usebackq tokens=1,2 delims=." %%x in ('%PHP_VERSION%') do set "PHP_MM=%%x.%%y"
-    echo [get-latest] php = %PHP_VERSION% (nts / vs17 / x64)
+    echo [get-latest] php = %PHP_VERSION%（nts / vs17 / x64）
   )
 ) else (
   echo [get-latest] php detection failed, keep pinned default
@@ -193,7 +195,7 @@ if "!DL_OK!"=="1" (
     for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\mongo.lines") do (
       if not defined MONGO_VERSION (
         set "LN=%%l"
-        set "LN=!LN:mongodb-windows-x86_64-=!"
+        set "LN=!LN:*mongodb-windows-x86_64-=!"
         for /f "tokens=1,2,3 delims=.-" %%a in ("!LN!") do (
           for /f "delims=-" %%z in ("%%c") do set "MONGO_VERSION=%%a.%%b.%%z"
         )
@@ -223,7 +225,7 @@ if "!DL_OK!"=="1" (
     for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\mongosh.lines") do (
       if not defined MONGO_SH_VERSION (
         set "LN=%%l"
-        set "LN=!LN:mongosh-=!"
+        set "LN=!LN:*mongosh-=!"
         for /f "tokens=1,2,3 delims=.-" %%a in ("!LN!") do (
           for /f "delims=-" %%z in ("%%c") do set "MONGO_SH_VERSION=%%a.%%b.%%z"
         )

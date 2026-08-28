@@ -143,7 +143,7 @@ if not defined FOUND_DLL goto pecl_dllmiss
 copy "%FOUND_DLL%" "%PHP_EXT_DIR%" /Y
 if exist "%PHP_EXT_DIR%\%FB_DLL%" (
 	call :enable_ext %FB_EXT% %FB_KIND%
-	echo %DATE% %TIME% [php] %FB_EXT% installed via PECL (%FB_VER% / php %PHP_MM%) >> "%TMP_DIR%\install.progress.log"
+	echo %DATE% %TIME% [php] %FB_EXT% installed via PECL（%FB_VER% / php %PHP_MM%） >> "%TMP_DIR%\install.progress.log"
 	goto :eof
 )
 :pecl_dllmiss
@@ -207,7 +207,7 @@ if not defined FOUND_DLL goto xqkeji_dllmiss
 copy "%FOUND_DLL%" "%PHP_EXT_DIR%" /Y
 if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
 	call :enable_ext xqkeji ext
-	echo %DATE% %TIME% [php] xqkeji installed (%XQ_TAG%) >> "%TMP_DIR%\install.progress.log"
+	echo %DATE% %TIME% [php] xqkeji installed（%XQ_TAG%） >> "%TMP_DIR%\install.progress.log"
 	goto :eof
 )
 :xqkeji_dllmiss
