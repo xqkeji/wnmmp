@@ -1,0 +1,6 @@
+# 强制 Windows 批处理文件使用 CRLF 换行，避免 clone/下载归档后
+# 变成 LF 导致 cmd.exe 解析失败（REM 被回显、'sion'/'ist' 等 phantom command）。
+# -text 让 git 原样存储/检出/归档（不做 LF<->CRLF 自动转换），
+# 配合磁盘上已是 CRLF 的文件，保证仓库 blob、clone、archive 全部为 CRLF。
+*.bat -text
+*.cmd -text
