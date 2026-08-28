@@ -20,8 +20,13 @@ set MONGOSH_DOWNLOAD_URL=https://downloads.mongodb.com/compass/mongosh-2.10.0-wi
 set MONGOSH_ZIP_DIR=mongosh-2.10.0-win32-x64
 set MONGOSH_OLD_DOWNLOAD_URL=https://downloads.mongodb.com/compass/mongosh-1.10.6-win32-x64.zip
 set MONGOSH_OLD_ZIP_DIR=mongosh-1.10.6-win32-x64
-set MYSQL_DOWNLOAD_URL=https://dev.mysql.com/get/Downloads/MySQL-9.7/mysql-9.7.0-winx64.zip
-set MYSQL_ZIP_DIR=mysql-9.7.0-winx64
+REM MySQL: Innovation 版本自 2026-07 起改用日历版本号 YY.M.P
+REM   26.7.0 = 2026 年 7 月的 Innovation 版（当前最新），下一个是 26.10.0。
+REM   LTS 线（9.7 / 8.4）仍沿用旧版本号，两者是并行独立的线。
+REM   注意 dev.mysql.com/downloads/mysql/ 常返回 403，自动探测基本不可用，
+REM   所以这里的钉死版本必须手动跟进。
+set MYSQL_DOWNLOAD_URL=https://dev.mysql.com/get/Downloads/MySQL-26.7/mysql-26.7.0-winx64.zip
+set MYSQL_ZIP_DIR=mysql-26.7.0-winx64
 set NGINX_DOWNLOAD_URL=https://nginx.org/download/nginx-1.31.4.zip
 set NGINX_ZIP_DIR=nginx-1.31.4
 set PHP_DOWNLOAD_URL=https://windows.php.net/downloads/releases/php-8.5.10-nts-Win32-vs17-x64.zip

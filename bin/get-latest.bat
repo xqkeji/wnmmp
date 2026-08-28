@@ -91,18 +91,23 @@ if defined NGINX_VERSION (
 
 
 REM ============================ MYSQL ============================
-REM Download link: href="/downloads/gpg/?file=mysql-26.7.0-winx64.msi&p=23"
-REM Anchor literal = "file=mysql-" (the gpg redirect carries the filename).
+REM MySQL Innovation 自 2026-07 起改用日历版本号 YY.M.P：26.7.0 = 2026年7月。
+REM 下载路径形如：/get/Downloads/MySQL-26.7/mysql-26.7.0-winx64.zip
+REM 锚点用 "/mysql-"（紧跟版本号），绝不能用 "file=mysql-"：set 的查找串
+REM 不能含 '='（会被误切成 find/replace），也不能含 '*'；且必须带 '*' 吃掉
+REM 锚点之前的整页内容，否则 tokens 会扫到别处的数字、拼出垃圾版本号。
+REM 注意：dev.mysql.com/downloads/mysql/ 常返回 403（带浏览器 UA 也 403），
+REM 探测失败是常态，此时回落到 download-ini.bat 钉死的版本。
 set "MYSQL_VERSION="
 call :fetch "%GL_DIR%\mysql.html" "https://dev.mysql.com/downloads/mysql/"
 echo [get-latest] mysql  page=!DL_SIZE!B ok=!DL_OK!
 if "!DL_OK!"=="1" (
-  findstr /c:"file=mysql-" "%GL_DIR%\mysql.html" > "%GL_DIR%\mysql.lines" 2>nul
+  findstr /c:"/mysql-" "%GL_DIR%\mysql.html" > "%GL_DIR%\mysql.lines" 2>nul
   if exist "%GL_DIR%\mysql.lines" (
     for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\mysql.lines") do (
       if not defined MYSQL_VERSION (
         set "LN=%%l"
-        set "LN=!LN:file=mysql-=!"
+        set "LN=!LN:*/mysql-=!"
         for /f "tokens=1,2,3 delims=.-" %%a in ("!LN!") do (
           for /f "delims=-" %%z in ("%%c") do set "MYSQL_VERSION=%%a.%%b.%%z"
         )
