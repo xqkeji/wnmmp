@@ -14,35 +14,26 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 REM =====================================================================
-REM install-pie.bat -- install PIE (PHP Installer for Extensions)
+REM install-pie.bat -- 检测 PIE 是否就绪（不下载）
 REM
-REM Called from download-php.bat AFTER the PHP core is present (PIE needs
-REM PHP 8.1+ to run, which the just-downloaded NTS PHP satisfies).
+REM PIE 是一个独立 PHAR，用于从源码编译 PHP 扩展。它和 Composer 一起放在
+REM bin\composer 目录里，启动器为：
+REM     bin\composer\pie.bat   （用本项目 php.exe + etc\php\php.ini 运行）
 REM
-REM Strategy to avoid GitHub in China:
-REM   1) composer + China packagist mirror (mirrors.aliyun.com/composer)
-REM      -> the dist download is proxied by the mirror, not GitHub.
-REM   2) fallback: download pie.phar directly from GitHub releases
-REM         (may be slow / blocked in CN -- only used when composer fails).
+REM 由于 GitHub 等下载通道在国内不稳定，pie.phar / composer.phar 均由用户
+REM 自行下载后放入 bin\composer，本脚本 **不自动下载**。这里只做就位检测：
+REM   - 若 bin\composer\pie.phar 存在，则设置 PIE_BIN 供 download-php.bat 使用；
+REM   - 若不存在，则提示用户手动放入，PIE_BIN 保持未定义，扩展走 PECL 直下。
 REM
-REM On success this script sets PIE_BIN (path to the pie launcher) so the
-REM caller can run "PIE_BIN install <pkg>". On ANY failure PIE_BIN is left
-REM UNSET, and download-php.bat falls back to direct PECL download for every
-REM extension -- so a PIE failure never breaks the install.
+REM 不论检测结果如何，都不会阻断安装流程。
 REM
 REM IMPORTANT: do NOT call "setlocal" here. install.bat enables delayed
 REM expansion globally and we need PIE_BIN to propagate back to the caller.
 REM =====================================================================
 
-set "PIE_DIR=%HOME_DIR%\bin\pie"
-
-REM already installed?
-if exist "%PIE_DIR%\pie.bat" (
-	set "PIE_BIN=%PIE_DIR%\pie.bat"
-	echo [pie] already installed, skip
-	goto :pie_done
-)
-if not exist "%PIE_DIR%" mkdir "%PIE_DIR%"
+set "PIE_DIR=%HOME_DIR%\bin\composer"
+set "PIE_PHAR=%PIE_DIR%\pie.phar"
+set "PIE_BAT=%PIE_DIR%\pie.bat"
 
 REM PIE itself needs php to run; if the core is somehow missing, skip PIE.
 if not exist "%HOME_DIR%\php\php.exe" (
@@ -50,31 +41,11 @@ if not exist "%HOME_DIR%\php\php.exe" (
 	goto :pie_done
 )
 
-REM ---- 1) composer + China mirror (avoids GitHub) ----
-echo [pie] installing via composer (mirror: mirrors.aliyun.com/composer)...
-echo {"require":{"php/pie":"*"}}>"%PIE_DIR%\composer.json"
-"%HOME_DIR%\bin\composer\composer.bat" --working-dir="%PIE_DIR%" config repos.packagist composer https://mirrors.aliyun.com/composer/ 2>nul
-"%HOME_DIR%\bin\composer\composer.bat" --working-dir="%PIE_DIR%" install --no-interaction --timeout=120 2>&1
-if exist "%PIE_DIR%\vendor\bin\pie.bat" (
-	set "PIE_BIN=%PIE_DIR%\vendor\bin\pie.bat"
-	echo [pie] installed via composer
-	goto :pie_done
+if exist "%PIE_PHAR%" (
+	echo [pie] 检测到 pie.phar（请确保已自行放入 bin\composer），已就绪。
+	set "PIE_BIN=%PIE_BAT%"
+) else (
+	echo [WARN] 未找到 bin\composer\pie.phar，请自行下载并放入该目录；扩展将走 PECL 直下。
 )
-
-REM ---- 2) GitHub phar fallback (may be slow / blocked in CN) ----
-echo [WARN] composer 安装 PIE 失败，回退到 GitHub phar（国内可能较慢/被墙）...
-wget.exe --no-hsts --no-config --no-check-certificate -c -O "%PIE_DIR%\pie.phar" https://github.com/php/pie/releases/latest/download/pie.phar
-if exist "%PIE_DIR%\pie.phar" (
-	echo @php "%%~dp0pie.phar" %%*>"%PIE_DIR%\pie.bat"
-	set "PIE_BIN=%PIE_DIR%\pie.bat"
-	echo [pie] installed via GitHub phar
-	goto :pie_done
-)
-
-echo.
-echo [ERROR] PIE 安装失败！PHP 扩展将回退为直接 PECL 下载。
-echo %DATE% %TIME% [pie] install FAILED >> "%TMP_DIR%\install.errors.log"
 
 :pie_done
-
-

@@ -23,7 +23,8 @@ if %errorlevel% neq 0 (
 	echo "[警告] 安装/注册 Windows 服务需要管理员权限！"
 	echo "请右键单击 install_service.bat，选择以管理员身份运行。"
 	echo.
-	pause
+	echo 按任意键关闭本窗口...
+	pause >nul
 	exit /b 1
 )
 
@@ -45,7 +46,8 @@ if exist !INSTALL_FILE! (
 
 	if not exist "%NSSM_PATH%" (
 		echo "未找到 nssm.exe"
-		pause
+		echo 按任意键关闭本窗口...
+		pause >nul
 		exit /b 1
 	)
 
@@ -95,15 +97,17 @@ if exist !INSTALL_FILE! (
 	)
 
 	echo "所有 wnmmp 服务已安装完成。"
-	echo "可在 服务(services.msc) 面板中查看和管理这些服务。"
+	echo "可在 Windows 服务面板（services.msc）中查看和管理这些服务。"
 
 	set HOME_DIR=
 	set PATH=
-	pause
+	echo 按任意键关闭本窗口...
+	pause >nul
 
 ) else (
     echo "请先运行 install.bat！"
-	pause
+	echo 按任意键关闭本窗口...
+	pause >nul
 )
 
 

@@ -28,4 +28,13 @@ if defined OLD_PATH (
 )
 
 :composer_cfg
-call "%COMPOSER_DIR%\composer.bat" config --global use-parent-dir true >nul 2>&1
+REM composer.phar / pie.phar 由用户自行下载后放入 bin\composer，脚本不自动下载
+REM （GitHub 等通道在国内不稳定）。这里只做「就位检测」+ 配置 + PATH 注册。
+set "COMPOSER_PHAR=%COMPOSER_DIR%\composer.phar"
+if exist "%COMPOSER_PHAR%" (
+	call "%COMPOSER_DIR%\composer.bat" config --global use-parent-dir true >nul 2>&1
+	echo [composer] 检测到 composer.phar（请确保已自行放入 bin\composer），已就绪。
+) else (
+	echo [WARN] 未找到 bin\composer\composer.phar，请自行下载并放入该目录，否则 composer 命令不可用。
+)
+

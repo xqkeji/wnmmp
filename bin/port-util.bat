@@ -1,17 +1,33 @@
 @echo off
-REM =============================================================
-REM WNMMP 共享端口/进程占用检测辅助
-REM 调用方必须已 setlocal enabledelayedexpansion（start.bat / stop.bat 均满足）。
-REM 本文件不自带 setlocal，以继承调用方环境，使回填的变量能返回调用方。
+set "_PU_LABEL=%~1"
+if not defined _PU_LABEL goto :eof
+shift /1
+goto %_PU_LABEL%
+REM -------------------------------------------------------------
+REM WNMMP shared port / process ownership helper.
 REM
-REM 用法:
-REM   call bin\port-util.bat :pid_lookup <PID> <outImgVar> <outSvcVar>
-REM       -> 设置 outImgVar=<镜像名>  outSvcVar=<服务名 或 N/A>
-REM   call bin\port-util.bat :port_owner <PORT> <outBusy> <outPid> <outImg> <outSvc>
-REM       -> 端口处于 LISTENING 时 outBusy=1 并回填 pid/img/svc，否则 outBusy=0
-REM =============================================================
+REM This file is deliberately kept 100% ASCII. It is CALLed from
+REM inside parenthesized blocks; non-ASCII REM lines in such a
+REM helper can be mis-tokenized by cmd.exe and run as commands.
+REM Keep every character here plain ASCII. Do not add Chinese.
+REM
+REM Prerequisite: the caller must have run setlocal enabledelayedexpansion.
+REM This file must NOT setlocal, so the variables it fills in are
+REM returned to the caller.
+REM
+REM Dispatch: arg 1 is the target label. It is captured first, then
+REM shift /1 removes it, so inside each helper args start at 1.
+REM
+REM Usage:
+REM   call bin\port-util.bat :pid_lookup PID OUT_IMAGE OUT_SERVICE
+REM       sets OUT_IMAGE=image.exe, OUT_SERVICE=service name or N/A
+REM   call bin\port-util.bat :port_owner PORT OUT_BUSY OUT_PID OUT_IMAGE OUT_SERVICE
+REM       sets OUT_BUSY=1 and fills pid/image/service when that port is
+REM       LISTENING, otherwise OUT_BUSY=0
+REM -------------------------------------------------------------
 
 REM ===================== helper :pid_lookup =====================
+REM Args: 1=PID  2=out image var  3=out service var
 :pid_lookup
 set "%~2="
 set "%~3=N/A"
@@ -22,6 +38,7 @@ for /f "tokens=1,3 delims=," %%a in ('tasklist /svc /fi "PID eq %~1" /fo csv /nh
 goto :eof
 
 REM ===================== helper :port_owner =====================
+REM Args: 1=PORT  2=out busy  3=out pid  4=out image  5=out service
 :port_owner
 set "%~2=0"
 set "%~3="

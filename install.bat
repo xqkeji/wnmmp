@@ -64,6 +64,7 @@ call :portcheck php-cgi 9000 "PHP-CGI" SKIP_PHP_CGI
 
 call "bin\install-vc-redist.bat"
 call "bin\download.bat"
+echo === 初始化数据库（MySQL / MongoDB）===
 REM mongodb init (skip if mongodb was skipped)
 if not "%SKIP_MONGODB%"=="1" call "bin\init-mongodb.bat"
 REM mysql init (skip if mysql was skipped)
@@ -106,7 +107,8 @@ REM clear variable
 set HOME_DIR=
 set PATH=
 
-pause
+echo 安装完成。按任意键关闭本窗口...
+pause >nul
 goto :eof
 
 
@@ -174,13 +176,13 @@ echo.
 echo **************************************************************
 echo * [警告] %PC_NAME% 的端口 %PC_PORT% 已被占用！
 if "%PC_OURS%"=="1" (
-	echo * 占用者：wnmmp 组件 %PC_IMG% (PID=%PC_PID%, 服务=%PC_SVC%)
+	echo * 占用者：wnmmp 组件 %PC_IMG%，PID=%PC_PID%，服务=%PC_SVC%
 ) else (
-	echo * 占用者：%PC_IMG% (PID=%PC_PID%, 服务=%PC_SVC%)
+	echo * 占用者：%PC_IMG%，PID=%PC_PID%，服务=%PC_SVC%
 	echo * 该进程/服务非 wnmmp 组件，安装程序不会自动停止它，
 	echo * 以免误停你依赖的关键服务（如 IIS、SQL Server 等）。
 )
-echo * 建议：在 服务(services.msc) 中找到上述服务/进程并停止，再运行 install.bat。
+echo * 建议：在 Windows 服务 services.msc 中找到上述服务/进程并停止，再运行 install.bat。
 echo **************************************************************
 choice /C AS /N /M "请选择 [A] 中止安装稍后手动处理  或  [S] 跳过 %PC_NAME% 安装："
 if errorlevel 2 (
@@ -192,7 +194,8 @@ if errorlevel 2 (
 )
 echo [abort] 安装已中止。请处理端口 %PC_PORT% 占用后，重新运行 install.bat。
 echo %DATE% %TIME% [port-check] ABORTED: %PC_NAME% port %PC_PORT% occupied >> "%TMP_DIR%\install.progress.log"
-pause
+echo 安装已中止。按任意键关闭本窗口...
+pause >nul
 exit
 goto :eof
 

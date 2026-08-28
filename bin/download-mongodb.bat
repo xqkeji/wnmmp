@@ -33,11 +33,11 @@ mkdir "%MONGODB_DIR%"
 
 REM ============================ mongodb server ============================
 set "USED_URL=%MONGODB_DOWNLOAD_URL%"
-wget.exe --no-hsts --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongodb.zip %MONGODB_DOWNLOAD_URL%
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongodb.zip %MONGODB_DOWNLOAD_URL%
 if !errorlevel! neq 0 (
 	echo [WARN] mongodb 下载失败，尝试旧版 5.0.33...
 	del %TMP_DIR%\download\mongodb.zip 2>nul
-	wget.exe --no-hsts --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongodb.zip %MONGODB_OLD_DOWNLOAD_URL%
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongodb.zip %MONGODB_OLD_DOWNLOAD_URL%
 	if !errorlevel! neq 0 (
 		echo.
 		echo [ERROR] mongodb 下载失败！安装未完成。
@@ -54,7 +54,7 @@ if !errorlevel! neq 0 (
 unzip -o %TMP_DIR%\download\mongodb.zip -d %TMP_DIR%\download
 if !errorlevel! neq 0 (
 	del %TMP_DIR%\download\mongodb.zip
-	wget.exe --no-hsts --no-config --no-check-certificate -O %TMP_DIR%\download\mongodb.zip %USED_URL%
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -O %TMP_DIR%\download\mongodb.zip %USED_URL%
 	unzip -o %TMP_DIR%\download\mongodb.zip -d %TMP_DIR%\download
 	if !errorlevel! neq 0 (
 		echo.
@@ -69,11 +69,11 @@ if !errorlevel! neq 0 (
 
 REM ============================== mongosh ===============================
 set "SH_USED_URL=%MONGOSH_DOWNLOAD_URL%"
-wget.exe --no-hsts --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongosh.zip %MONGOSH_DOWNLOAD_URL%
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongosh.zip %MONGOSH_DOWNLOAD_URL%
 if !errorlevel! neq 0 (
 	echo [WARN] mongosh 下载失败，尝试旧版 1.10.6...
 	del %TMP_DIR%\download\mongosh.zip 2>nul
-	wget.exe --no-hsts --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongosh.zip %MONGOSH_OLD_DOWNLOAD_URL%
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongosh.zip %MONGOSH_OLD_DOWNLOAD_URL%
 	if !errorlevel! neq 0 (
 		echo.
 		echo [ERROR] mongosh 下载失败！安装未完成。
@@ -90,7 +90,7 @@ if !errorlevel! neq 0 (
 unzip -o %TMP_DIR%\download\mongosh.zip -d %TMP_DIR%\download
 if !errorlevel! neq 0 (
 	del %TMP_DIR%\download\mongosh.zip
-	wget.exe --no-hsts --no-config --no-check-certificate -O %TMP_DIR%\download\mongosh.zip %SH_USED_URL%
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -O %TMP_DIR%\download\mongosh.zip %SH_USED_URL%
 	unzip -o %TMP_DIR%\download\mongosh.zip -d %TMP_DIR%\download
 	if !errorlevel! neq 0 (
 		echo.

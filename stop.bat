@@ -19,6 +19,7 @@ set "script_dir_with_slash=%~dp0"
 set "HOME_DIR=%script_dir_with_slash:~0,-1%"
 set PATH=C:\Windows\System32;%HOME_DIR%\bin;%HOME_DIR%\mongodb\bin;%HOME_DIR%\mysql\bin;%HOME_DIR%\php;%HOME_DIR%\nginx;%PATH%
 set "NSSM_PATH=%HOME_DIR%\bin\nssm.exe"
+set "EXT_OCC=0"
 
 echo ==============================================================
 echo  WNMMP 停止：停止 wnmmp 组件，并检测外部端口占用
@@ -30,12 +31,20 @@ call :stop_one mongod.exe wnmmp-mongodb 27017
 call :stop_one php-cgi.exe wnmmp-php-cgi 9000
 
 echo.
-echo 已完成。若上方提示有外部组件占用端口，请手动停止后再启动 wnmmp。
+if "!EXT_OCC!"=="1" (
+    echo [注意] 部分组件停止后端口仍被外部组件占用，或自身服务配置了自动重启。
+    echo [注意] 这些项需你手动处理：请停止对应外部进程或服务后，重试 stop.bat。
+) else (
+    echo 已完成。所有 wnmmp 组件均已停止。
+)
+echo.
+echo 按任意键关闭本窗口...
+pause >nul
 exit /b
 
 REM ===================== helper :stop_one =====================
-REM Args: %1=进程名  %2=服务名  %3=端口
-REM 已知组件->停服务(若存在)+结束进程；端口复查若被外部组件占用->仅提示。
+REM 参数: 进程名  服务名  端口
+REM 已知组件先停服务（若存在）再结束进程；端口复查若被外部组件占用则仅提示，不自动处理。
 :stop_one
 set "P=%~1"
 set "SVC=%~2"
@@ -57,9 +66,11 @@ if "!PC_BUSY!"=="1" (
 	if /i "!PC_IMG!"=="php-cgi.exe" set "PC_OURS=1"
 	if "!PC_OURS!"=="1" (
 		echo [!] 端口 %PORT% 仍被 wnmmp 自身组件 %PC_IMG% 占用（可能服务配置了自动重启），请检查。
+		set "EXT_OCC=1"
 	) else (
 		echo [!!] 端口 %PORT% 被外部组件占用（%PC_IMG% PID=%PC_PID% 服务=%PC_SVC%）
-		echo [!!] 该进程/服务非 wnmmp 组件，停止脚本不会自动处理，请手动停止后再启动 wnmmp。
+		echo [!!] 该进程/服务非 wnmmp 组件，停止脚本不会自动处理，请手动停止该外部组件后再重试 stop.bat。
+		set "EXT_OCC=1"
 	)
 )
 goto :eof

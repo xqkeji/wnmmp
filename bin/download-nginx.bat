@@ -29,7 +29,7 @@ if exist "%NGINX_DIR%" (
 )
 mkdir "%NGINX_DIR%"
 
-wget.exe --no-hsts --no-config -c -O %TMP_DIR%\download\nginx.zip %NGINX_DOWNLOAD_URL%
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O %TMP_DIR%\download\nginx.zip %NGINX_DOWNLOAD_URL%
 if !errorlevel! neq 0 (
 	echo.
 	echo [ERROR] nginx 下载失败！安装未完成。
@@ -43,7 +43,7 @@ if !errorlevel! neq 0 (
 unzip -o %TMP_DIR%\download\nginx.zip -d %TMP_DIR%\download
 if !errorlevel! neq 0 (
 	del %TMP_DIR%\download\nginx.zip
-	wget.exe --no-hsts --no-config -O %TMP_DIR%\download\nginx.zip %NGINX_DOWNLOAD_URL%
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -O %TMP_DIR%\download\nginx.zip %NGINX_DOWNLOAD_URL%
 	unzip -o %TMP_DIR%\download\nginx.zip -d %TMP_DIR%\download
 	if !errorlevel! neq 0 (
 		echo.

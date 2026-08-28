@@ -53,12 +53,13 @@ for /f "tokens=1,2 delims=." %%a in ("!PHP_FULL!") do set "PHP_MM=%%a.%%b"
 echo [php] installed PHP major.minor = %PHP_MM%
 
 
-REM ---- install PIE (best-effort, OPT-IN) ----
-REM PIE builds extensions from source and depends on composer/GitHub, which are
-REM unreliable/slow in CN. Windows ships prebuilt DLLs straight from PECL (see
-REM :install_pecl_ext below), so PIE is OFF by default and NEVER blocks the
-REM extension install. Set WNMMP_USE_PIE=1 to also install PIE tooling.
-if defined WNMMP_USE_PIE call "bin\install-pie.bat"
+REM ---- 检测 PIE 是否就绪（不下载，phar 由用户自行放入 bin\composer） ----
+REM PIE 是独立 PHAR（bin\composer\pie.phar），与 Composer 同处 bin\composer，
+REM 因而 `pie` 命令在 bin\composer 加入 PATH 后即可用（无需额外配置环境变量）。
+REM 由于 GitHub 等通道国内不稳定，pie.phar / composer.phar 均由用户自行下载放入，
+REM 本脚本不自动下载，仅做就位检测。从源码编译已关闭（Windows 走 PECL 预编译
+REM DLL via :install_pecl_ext），故 PIE 缺失也不会阻断扩展安装——走 PECL 直下。
+call "bin\install-pie.bat"
 
 
 REM ===========================================================================
@@ -83,7 +84,7 @@ goto :eof
 
 REM ===================== helper :download_core =====================
 :download_core
-wget.exe --no-hsts --no-config -c -O "%TMP_DIR%\download\php.zip" %PHP_DOWNLOAD_URL%
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O "%TMP_DIR%\download\php.zip" %PHP_DOWNLOAD_URL%
 if not "!errorlevel!"=="0" (
 	echo.
 	echo [ERROR] PHP 核心下载失败！安装未完成。
@@ -96,7 +97,7 @@ if not "!errorlevel!"=="0" (
 unzip -o "%TMP_DIR%\download\php.zip" -d "%TMP_DIR%\download\php"
 if not "!errorlevel!"=="0" (
 	del "%TMP_DIR%\download\php.zip"
-	wget.exe --no-hsts --no-config -O "%TMP_DIR%\download\php.zip" %PHP_DOWNLOAD_URL%
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -O "%TMP_DIR%\download\php.zip" %PHP_DOWNLOAD_URL%
 	unzip -o "%TMP_DIR%\download\php.zip" -d "%TMP_DIR%\download\php"
 	if not "!errorlevel!"=="0" (
 		echo.
@@ -130,7 +131,7 @@ if exist "%PHP_EXT_DIR%\%FB_DLL%" (
 )
 set "FB_URL=https://downloads.php.net/~windows/pecl/releases/%FB_EXT%/%FB_VER%/php_%FB_EXT%-%FB_VER%-%PHP_MM%-nts-vs17-x64.zip"
 echo [php] %FB_EXT% PECL 直下 (ext %FB_VER% / php %PHP_MM%)...
-wget.exe --no-hsts --no-config --no-check-certificate -c -O "%TMP_DIR%\download\php-%FB_ZIP%.zip" "%FB_URL%"
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O "%TMP_DIR%\download\php-%FB_ZIP%.zip" "%FB_URL%"
 if not "!errorlevel!"=="0" goto pecl_failed
 if not exist "%TMP_DIR%\download\php-%FB_ZIP%.zip" goto pecl_failed
 unzip -o "%TMP_DIR%\download\php-%FB_ZIP%.zip" -d "%TMP_DIR%\download\php-%FB_ZIP%"
@@ -189,7 +190,7 @@ if defined XQ_TAG (
 	)
 )
 echo [php] downloading xqkeji ^(gitee^)...
-wget.exe --no-hsts --no-config -c -O "%TMP_DIR%\download\php-xqkeji.zip" "%PHP_XQKEJI_DOWNLOAD_URL%"
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O "%TMP_DIR%\download\php-xqkeji.zip" "%PHP_XQKEJI_DOWNLOAD_URL%"
 if not "!errorlevel!"=="0" goto xqkeji_failed
 if not exist "%TMP_DIR%\download\php-xqkeji.zip" goto xqkeji_failed
 if exist "%TMP_DIR%\download\php-xqkeji" rd /s /q "%TMP_DIR%\download\php-xqkeji" 2>nul
@@ -237,7 +238,7 @@ set "XQ_TAG="
 set "XQ_BESTKEY=0"
 set "XQ_TAGS=%GL_DIR%\xqkeji.tags"
 if exist "%XQ_TAGS%" del "%XQ_TAGS%" >nul 2>&1
-wget.exe --no-hsts --no-config --no-check-certificate --timeout=30 --tries=2 -q -O "%XQ_TAGS%" "https://gitee.com/api/v5/repos/xqkeji/php-xqkeji/tags?per_page=100" 2>nul
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate --timeout=30 --tries=2 -q -O "%XQ_TAGS%" "https://gitee.com/api/v5/repos/xqkeji/php-xqkeji/tags?per_page=100" 2>nul
 if not exist "%XQ_TAGS%" goto :eof
 for %%S in ("%XQ_TAGS%") do set "XQ_SIZE=%%~zS"
 if "!XQ_SIZE!"=="0" goto :eof

@@ -31,7 +31,8 @@ set "SKIP_FILE=%TMP_DIR%\skipped.lst"
 
 if not exist "%INSTALL_FILE%" (
     echo "请先运行 install.bat！"
-	pause
+	echo 按任意键关闭本窗口...
+	pause >nul
 	exit /b 1
 )
 
@@ -81,11 +82,14 @@ if not errorlevel 1 (
 
 set HOME_DIR=
 set PATH=
+echo.
+echo 启动完成。按任意键关闭本窗口（各服务在后台继续运行）...
+pause >nul
 exit
 
 REM ===================== helper :start_svc =====================
 REM Args: %1=进程名  %2=显示名  %3=启动命令行  %4=端口
-REM 启动前检测端口：被自身组件占用->停掉(服务/进程)后复查再启动；
+REM 启动前检测端口：被自身组件占用->停掉（服务/进程）后复查再启动；
 REM 被外部组件占用->提示手动停止并跳过该组件启动（保守策略，不擅自停外部服务）。
 :start_svc
 set "SVC_PROC=%~1"
@@ -116,7 +120,7 @@ if "!PC_BUSY!"=="1" (
 		echo [%SVC_NAME%] 端口 %SVC_PORT% 已释放，正在启动...
 	) else (
 		echo [!!] %SVC_NAME% 端口 %SVC_PORT% 被外部组件占用（%PC_IMG% PID=%PC_PID% 服务=%PC_SVC%）
-		echo [!!] 该进程/服务非 wnmmp 组件，请先手动停止该外部组件（可在 服务(services.msc) 中处理），再运行 start.bat。
+		echo [!!] 该进程/服务非 wnmmp 组件，请先手动停止该外部组件（可在 Windows 服务 services.msc 中处理），再运行 start.bat。
 		echo [!!] 本次跳过 %SVC_NAME% 启动。
 		goto :start_svc_done
 	)

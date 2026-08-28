@@ -22,7 +22,8 @@ if %errorlevel% neq 0 (
 	echo "[警告] 卸载 Windows 服务需要管理员权限！"
 	echo "请右键单击 uninstall_service.bat，选择以管理员身份运行。"
 	echo.
-	pause
+	echo 按任意键关闭本窗口...
+	pause >nul
 	exit /b 1
 )
 
@@ -36,7 +37,8 @@ set "NSSM_PATH=%HOME_DIR%\bin\nssm.exe"
 
 if not exist "%NSSM_PATH%" (
 	echo "未找到 nssm.exe"
-	pause
+	echo 按任意键关闭本窗口...
+	pause >nul
 	exit /b 1
 )
 
@@ -73,4 +75,7 @@ if not errorlevel 1 (
 	%NSSM_PATH% remove wnmmp-php-cgi confirm
 )
 
+echo.
+echo 卸载完成。按任意键关闭本窗口...
+pause >nul
 

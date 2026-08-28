@@ -53,7 +53,7 @@ if exist "%DL_FILE%" del "%DL_FILE%" >nul 2>&1
 REM --no-config stops wget from reading any wgetrc/HSTS file (a common source
 REM of "Invalid argument" under cmd.exe where HOME is unset). The browser UA
 REM is dropped too: these are official mirrors that serve wget's default UA.
-wget.exe --no-hsts --no-config --no-check-certificate --timeout=30 --tries=2 -q -O "%DL_FILE%" "%DL_URL%" 2>nul
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate --timeout=30 --tries=2 -q -O "%DL_FILE%" "%DL_URL%" 2>nul
 if exist "%DL_FILE%" (
   for %%S in ("%DL_FILE%") do set "DL_SIZE=%%~zS"
   if !DL_SIZE! gtr 0 set "DL_OK=1"
@@ -287,7 +287,7 @@ set "XQ_BESTKEY=0"
 set "XQ_MMKEY=0"
 set "XQ_TAGS=%GL_DIR%\xqkeji.tags"
 if exist "%XQ_TAGS%" del "%XQ_TAGS%" >nul 2>&1
-wget.exe --no-hsts --no-config --no-check-certificate --timeout=30 --tries=2 -q -O "%XQ_TAGS%" "https://gitee.com/api/v5/repos/xqkeji/php-xqkeji/tags?per_page=100" 2>nul
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate --timeout=30 --tries=2 -q -O "%XQ_TAGS%" "https://gitee.com/api/v5/repos/xqkeji/php-xqkeji/tags?per_page=100" 2>nul
 if not exist "%XQ_TAGS%" goto :eof
 for %%S in ("%XQ_TAGS%") do set "XQSZ=%%~zS"
 if "!XQSZ!"=="0" goto :eof

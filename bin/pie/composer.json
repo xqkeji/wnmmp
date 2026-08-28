@@ -1,7 +1,0 @@
-{"require":{"php/pie":"*"},
-    "repositories": [{
-        "name": "packagist",
-        "type": "composer",
-        "url": "https://mirrors.aliyun.com/composer/"
-    }]
-}

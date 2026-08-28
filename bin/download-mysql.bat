@@ -29,7 +29,7 @@ if exist "%MYSQL_DIR%" (
 )
 mkdir "%MYSQL_DIR%"
 
-wget.exe --no-hsts --no-config -c -O %TMP_DIR%\download\mysql.zip %MYSQL_DOWNLOAD_URL%
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O %TMP_DIR%\download\mysql.zip %MYSQL_DOWNLOAD_URL%
 if !errorlevel! neq 0 (
 	echo.
 	echo [ERROR] mysql 下载失败！安装未完成。
@@ -43,7 +43,7 @@ if !errorlevel! neq 0 (
 unzip -o %TMP_DIR%\download\mysql.zip -d %TMP_DIR%\download
 if !errorlevel! neq 0 (
 	del %TMP_DIR%\download\mysql.zip
-	wget.exe --no-hsts --no-config -O %TMP_DIR%\download\mysql.zip %MYSQL_DOWNLOAD_URL%
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -O %TMP_DIR%\download\mysql.zip %MYSQL_DOWNLOAD_URL%
 	unzip -o %TMP_DIR%\download\mysql.zip -d %TMP_DIR%\download
 	if !errorlevel! neq 0 (
 		echo.
