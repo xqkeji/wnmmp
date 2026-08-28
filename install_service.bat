@@ -39,6 +39,29 @@ set INSTALL_FILE=%TMP_DIR%\install.lock
 REM skipped-install record (each line: nginx / mysql / mongodb / php-cgi)
 set "SKIP_FILE=%TMP_DIR%\skipped.lst"
 
+REM ---- 预检：确认本脚本所在目录是真正完成安装的目录 ----
+REM 常见误操作：在源码目录（尚未下载组件）里直接运行本脚本，会把服务注册到
+REM 不存在的路径，表现为"安装成功但启动失败：Unexpected status SERVICE_STOPPED"。
+REM 这里统计缺失的组件数，只有四个全缺才判定为目录不对（避免误伤被跳过的组件）。
+set "PC_MISS=0"
+if not exist "%HOME_DIR%\nginx\nginx.exe" set /a "PC_MISS+=1"
+if not exist "%HOME_DIR%\mongodb\bin\mongod.exe" set /a "PC_MISS+=1"
+if not exist "%HOME_DIR%\mysql\bin\mysqld.exe" set /a "PC_MISS+=1"
+if not exist "%HOME_DIR%\php\php-cgi.exe" set /a "PC_MISS+=1"
+if !PC_MISS! equ 4 (
+	echo.
+	echo **************************************************************
+	echo * [错误] 当前目录不是有效的 wnmmp 安装目录！
+	echo * 四个组件程序 nginx / mongod / mysqld / php-cgi 均未找到，
+	echo * 说明组件尚未下载，或你运行的是源码目录而不是安装目录。
+	echo * 当前目录：%HOME_DIR%
+	echo * 请先在目标目录运行 install.bat 完成安装，或切换到已安装的目录
+	echo * 后，再右键以管理员身份运行本脚本。
+	echo **************************************************************
+	echo.
+	pause
+	exit /b 1
+)
 
 set "NSSM_PATH=%HOME_DIR%\bin\nssm.exe"
 

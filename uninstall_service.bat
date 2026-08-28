@@ -29,7 +29,7 @@ if %errorlevel% neq 0 (
 
 set "script_dir_with_slash=%~dp0"
 set "HOME_DIR=%script_dir_with_slash:~0,-1%"
-set "TMP_DIR=%HOME_DIR%tmp"
+set "TMP_DIR=%HOME_DIR%\tmp"
 REM skipped-install record (each line: nginx / mysql / mongodb / php-cgi)
 set "SKIP_FILE=%TMP_DIR%\skipped.lst"
 
