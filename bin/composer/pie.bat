@@ -1,3 +1,5 @@
+@echo off
+chcp 65001 >nul
 REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao
 REM Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,4 +20,17 @@ for %%i in ("%~dp0..\..") do set "HOME_DIR=%%~fi"
 set "PHP_DIR=%HOME_DIR%\php"
 cd /d "!ORIGINAL_DIR!"
 
-"%PHP_DIR%\php.exe" -c "%HOME_DIR%\etc\php\php.ini" "%HOME_DIR%\bin\composer\pie.phar" %*
+REM PIE 是 Symfony/Box 打包的 PHAR，其依赖的 symfony/service-contracts 与
+REM psr 扩展冲突：加载 psr 时 PIE 会拒绝启动。
+REM 这里生成一份去掉 psr 的临时 ini 专供 PIE 使用，不改动用户主 php.ini，
+REM 其他程序仍可正常使用 psr。
+REM 前提：php.ini 必须是 CRLF，否则 findstr 认不出行边界（见 .gitattributes）。
+set "PHP_INI=%HOME_DIR%\etc\php\php.ini"
+set "PIE_INI=%TEMP%\wnmmp-pie-php.ini"
+set "PIE_SZ=0"
+findstr /v /x /c:"extension=psr" "%PHP_INI%" > "%PIE_INI%" 2>nul
+if exist "%PIE_INI%" for %%S in ("%PIE_INI%") do set "PIE_SZ=%%~zS"
+if "%PIE_SZ%"=="0" set "PIE_INI=%PHP_INI%"
+
+"%PHP_DIR%\php.exe" -c "%PIE_INI%" "%HOME_DIR%\bin\composer\pie.phar" %*
+

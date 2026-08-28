@@ -1,3 +1,5 @@
+@echo off
+chcp 65001 >nul
 REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao
 REM Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,5 +21,4 @@ set "PHP_DIR=%HOME_DIR%\php"
 cd /d "!ORIGINAL_DIR!"
 
 "%PHP_DIR%\php.exe" -c "%HOME_DIR%\etc\php\php.ini" "%HOME_DIR%\bin\composer\composer.phar" %*
-
 
