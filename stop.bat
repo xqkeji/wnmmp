@@ -1,23 +1,65 @@
-:: Copyright (c) xqkeji.cn. All rights reserved.
-:: Author: Zhang Wenhao
-:: Licensed under the Apache License, Version 2.0 (the "License");
-:: you may not use this file except in compliance with the License.
-:: You may obtain a copy of the License at
-::
-::     http://www.apache.org/licenses/LICENSE-2.0
-::
-:: Unless required by applicable law or agreed to in writing, software
-:: distributed under the License is distributed on an "AS IS" BASIS,
-:: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-:: See the License for the specific language governing permissions and
-:: limitations under the License.
 @echo off
-set PATH=C:\Windows\System32;%PATH%
-REM find & stop service
-tasklist | findstr /i mongod.exe && taskkill /f /im mongod.exe
-tasklist | findstr /i mysqld.exe && taskkill /f /im mysqld.exe
-tasklist | findstr /i php-cgi.exe && taskkill /f /im php-cgi.exe
-tasklist | findstr /i nginx.exe && taskkill /f /im nginx.exe
+chcp 65001 >nul
+REM Copyright (c) xqkeji.cn. All rights reserved.
+REM Author: Zhang Wenhao
+REM Licensed under the Apache License, Version 2.0 (the "License");
+REM you may not use this file except in compliance with the License.
+REM You may obtain a copy of the License at
+REM
+REM     http://www.apache.org/licenses/LICENSE-2.0
+REM
+REM Unless required by applicable law or agreed to in writing, software
+REM distributed under the License is distributed on an "AS IS" BASIS,
+REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+REM See the License for the specific language governing permissions and
+REM limitations under the License.
+setlocal enabledelayedexpansion
+cd /d %~dp0
+set "script_dir_with_slash=%~dp0"
+set "HOME_DIR=%script_dir_with_slash:~0,-1%"
+set PATH=C:\Windows\System32;%HOME_DIR%\bin;%HOME_DIR%\mongodb\bin;%HOME_DIR%\mysql\bin;%HOME_DIR%\php;%HOME_DIR%\nginx;%PATH%
+set "NSSM_PATH=%HOME_DIR%\bin\nssm.exe"
 
-REM close cmd window
-exit
+echo ==============================================================
+echo  WNMMP 停止：停止 wnmmp 组件，并检测外部端口占用
+echo ==============================================================
+
+call :stop_one nginx.exe wnmmp-nginx 80
+call :stop_one mysqld.exe wnmmp-mysql 3306
+call :stop_one mongod.exe wnmmp-mongodb 27017
+call :stop_one php-cgi.exe wnmmp-php-cgi 9000
+
+echo.
+echo 已完成。若上方提示有外部组件占用端口，请手动停止后再启动 wnmmp。
+exit /b
+
+REM ===================== helper :stop_one =====================
+REM Args: %1=进程名  %2=服务名  %3=端口
+REM 已知组件->停服务(若存在)+结束进程；端口复查若被外部组件占用->仅提示。
+:stop_one
+set "P=%~1"
+set "SVC=%~2"
+set "PORT=%~3"
+echo ------------------------------------------------------------
+sc query "%SVC%" >nul 2>&1
+if not errorlevel 1 (
+	echo [%P%] 停止服务 %SVC% ...
+	net stop "%SVC%" /y >nul 2>&1
+)
+taskkill /f /im "%P%" >nul 2>&1
+if not errorlevel 1 ( echo [%P%] 进程已停止 ) else ( echo [%P%] 进程未运行或无需停止 )
+set "PC_BUSY=0" & set "PC_PID=" & set "PC_IMG=" & set "PC_SVC=N/A" & set "PC_OURS=0"
+call bin\port-util.bat :port_owner %PORT% PC_BUSY PC_PID PC_IMG PC_SVC
+if "!PC_BUSY!"=="1" (
+	if /i "!PC_IMG!"=="nginx.exe" set "PC_OURS=1"
+	if /i "!PC_IMG!"=="mysqld.exe" set "PC_OURS=1"
+	if /i "!PC_IMG!"=="mongod.exe" set "PC_OURS=1"
+	if /i "!PC_IMG!"=="php-cgi.exe" set "PC_OURS=1"
+	if "!PC_OURS!"=="1" (
+		echo [!] 端口 %PORT% 仍被 wnmmp 自身组件 %PC_IMG% 占用（可能服务配置了自动重启），请检查。
+	) else (
+		echo [!!] 端口 %PORT% 被外部组件占用（%PC_IMG% PID=%PC_PID% 服务=%PC_SVC%）
+		echo [!!] 该进程/服务非 wnmmp 组件，停止脚本不会自动处理，请手动停止后再启动 wnmmp。
+	)
+)
+goto :eof
