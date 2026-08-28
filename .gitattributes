@@ -4,3 +4,11 @@
 # 配合磁盘上已是 CRLF 的文件，保证仓库 blob、clone、archive 全部为 CRLF。
 *.bat -text
 *.cmd -text
+
+# 配置文件同理，且同样致命：etc\php\php.ini 若以 LF 交付（下载归档 zip 直接取
+# blob，不做 autocrlf 转换），Windows 的 findstr 就认不出"行边界"——整份文件会被
+# 当成一行，于是 download-php.bat 里 findstr /x 的判重永远命中不了，扩展被重复
+# 追加进 php.ini，PHP 启动时刷 "Module xxx is already loaded"。
+# 用 -text 让 git 原样存 CRLF，保证 clone 与下载归档拿到的都是 CRLF。
+*.ini -text
+*.conf -text
