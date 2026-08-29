@@ -48,7 +48,7 @@ if not "!%~3!"=="N/A" (
 	if defined TMP_DIR ( set "_PU_TMP=%TMP_DIR%" ) else ( set "_PU_TMP=%TEMP%" )
 	if not exist "!_PU_TMP!" md "!_PU_TMP!" >nul 2>&1
 	> "!_PU_TMP!\pc_svc.txt" echo(!%~3!
-	findstr /x /r "[a-zA-Z0-9_.,-]*" "!_PU_TMP!\pc_svc.txt" >nul 2>&1
+	findstr /r "^[a-zA-Z0-9_.,-][a-zA-Z0-9_.,-]*$" "!_PU_TMP!\pc_svc.txt" >nul 2>&1
 	if errorlevel 1 set "%~3=N/A"
 )
 goto :eof

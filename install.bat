@@ -153,18 +153,18 @@ REM ASCII, so anything outside the safe set is reported as N/A instead.
 if not defined PC_SVC set "PC_SVC=N/A"
 if not "!PC_SVC!"=="N/A" (
 	> "%TMP_DIR%\pc_svc.txt" echo(!PC_SVC!
-	findstr /x /r "[a-zA-Z0-9_.,-]*" "%TMP_DIR%\pc_svc.txt" >nul 2>&1
+	findstr /r "^[a-zA-Z0-9_.,-][a-zA-Z0-9_.,-]*$" "%TMP_DIR%\pc_svc.txt" >nul 2>&1
 	if errorlevel 1 set "PC_SVC=N/A"
 )
-if /i "%PC_IMG%"=="nginx.exe" ( set "PC_OURS=1" ) else ( set "PC_OURS=0" )
-if /i "%PC_IMG%"=="mysqld.exe" set "PC_OURS=1"
-if /i "%PC_IMG%"=="mongod.exe" set "PC_OURS=1"
-if /i "%PC_IMG%"=="php-cgi.exe" set "PC_OURS=1"
-if "%PC_OURS%"=="1" (
+if /i "!PC_IMG!"=="nginx.exe" ( set "PC_OURS=1" ) else ( set "PC_OURS=0" )
+if /i "!PC_IMG!"=="mysqld.exe" set "PC_OURS=1"
+if /i "!PC_IMG!"=="mongod.exe" set "PC_OURS=1"
+if /i "!PC_IMG!"=="php-cgi.exe" set "PC_OURS=1"
+if "!PC_OURS!"=="1" (
 	echo [port] !PC_NAME! 端口被 wnmmp 自身组件占用（!PC_IMG! PID=!PC_PID!, 服务=!PC_SVC!）
-	if "%PC_ADMIN%"=="1" (
+	if "!PC_ADMIN!"=="1" (
 		if not "!PC_SVC!"=="N/A" (
-			for /f "tokens=1 delims=," %%s in ("%PC_SVC%") do (
+			for /f "tokens=1 delims=," %%s in ("!PC_SVC!") do (
 				echo [port] 尝试停止服务 %%s ...
 				net stop "%%s" /y >nul 2>&1
 			)
@@ -186,14 +186,19 @@ if "%PC_OURS%"=="1" (
 echo.
 echo **************************************************************
 echo * [警告] !PC_NAME! 的端口 !PC_PORT! 已被占用！
-REM PC_IMG/PC_PID/PC_SVC come from tasklist and are NOT under our control.
-REM Interpolating them with %var% would expand them at PARSE time, so any
-REM quote / paren / ampersand in the value would break the block and make
-REM cmd treat the tail of a later line as a new command. !var! expands at
-REM RUN time, after parsing, so it cannot do that. Hence: no block here.
+REM PC_IMG/PC_PID/PC_SVC/PC_OURS all derive from tasklist or decisions and are
+REM NOT under our control. Interpolating them with %var% would expand at PARSE
+REM time, so any quote / paren / ampersand in the value would break the block
+REM and make cmd treat the tail of a line as a new command. !var! expands at
+REM RUN time, after parsing, so it cannot do that. The whole port-busy section
+REM therefore uses !var! everywhere a tasklist-derived/decision value is echoed
+REM or branched on -- including the ( ... ) block at :portcheck and this block.
 echo * 占用者：!PC_IMG!，PID=!PC_PID!，服务=!PC_SVC!
-if "%PC_OURS%"=="1" echo * 属于 wnmmp 自身组件，可安全停止。
-if not "%PC_OURS%"=="1" echo * 非 wnmmp 组件，安装程序不会自动停止它，以免误停你依赖的关键服务（如 IIS、SQL Server 等）。
+if "!PC_OURS!"=="1" (
+	echo * 属于 wnmmp 自身组件，可安全停止。
+) else (
+	echo * 非 wnmmp 组件，安装程序不会自动停止它，以免误停你依赖的关键服务，例如 IIS、SQL Server 等。
+)
 echo * 建议：在 Windows 服务 services.msc 中找到上述服务/进程并停止，再运行 install.bat。
 echo **************************************************************
 choice /C AS /N /M "请选择 [A] 中止安装稍后手动处理  或  [S] 跳过 !PC_NAME! 安装："
