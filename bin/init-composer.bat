@@ -1,7 +1,9 @@
+@echo off
+chcp 65001 >nul
 REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao
 REM Licensed under the Apache License, Version 2.0 (the "License");
-REM You may not use this file except in compliance with the License.
+REM you may not use this file except in compliance with the License.
 REM You may obtain a copy of the License at
 REM
 REM     http://www.apache.org/licenses/LICENSE-2.0
@@ -12,20 +14,17 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 set "COMPOSER_DIR=%HOME_DIR%\bin\composer"
-set "NEW_PATH=%COMPOSER_DIR%"
 
-REM Best-effort: prepend composer dir to the user PATH so `composer` is
-REM callable. This is NON-ESSENTIAL for the install -- any failure here must
-REM never abort the whole installer, so every step is guarded.
-set "OLD_PATH="
-for /f "skip=1 tokens=2*" %%a in ('reg query "HKCU\Environment" /v "Path" 2^>nul') do set "OLD_PATH=%%b"
-if defined OLD_PATH (
-	echo !OLD_PATH! | find /i "%NEW_PATH%" >nul 2>&1
-	if not errorlevel 1 goto :composer_cfg
-	setx PATH "%OLD_PATH%;%NEW_PATH%" >nul 2>&1
-) else (
-	setx PATH "%NEW_PATH%" >nul 2>&1
-)
+REM Register %COMPOSER_DIR% at the FRONT of the user PATH so this fresh install
+REM wins over older wnmmp installs that are still on disk.
+REM The old code APPENDED to the end, which let e.g. D:\wnmmp-1.0.17 keep
+REM shadowing a freshly installed D:\wnmmp-1.1.3 -- php.bat / composer.bat from
+REM the OLD version ran instead of the new one.
+REM Everything lives in bin\register-path.bat, which is idempotent, backs the
+REM old value up and rolls back on failure.
+REM This is NON-ESSENTIAL for the install -- any failure here must never abort
+REM the whole installer, so it is a plain best-effort call.
+call "%HOME_DIR%\bin\register-path.bat"
 
 :composer_cfg
 REM composer.phar / pie.phar 由用户自行下载后放入 bin\composer，脚本不自动下载

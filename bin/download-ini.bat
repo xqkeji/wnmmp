@@ -1,3 +1,5 @@
+@echo off
+chcp 65001 >nul
 REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao
 REM Licensed under the Apache License, Version 2.0 (the "License");
