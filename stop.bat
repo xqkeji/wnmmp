@@ -65,10 +65,10 @@ if "!PC_BUSY!"=="1" (
 	if /i "!PC_IMG!"=="mongod.exe" set "PC_OURS=1"
 	if /i "!PC_IMG!"=="php-cgi.exe" set "PC_OURS=1"
 	if "!PC_OURS!"=="1" (
-		echo [!] 端口 %PORT% 仍被 wnmmp 自身组件 %PC_IMG% 占用（可能服务配置了自动重启），请检查。
+		echo [!] 端口 !PORT! 仍被 wnmmp 自身组件 !PC_IMG! 占用（可能服务配置了自动重启），请检查。
 		set "EXT_OCC=1"
 	) else (
-		echo [!!] 端口 %PORT% 被外部组件占用（%PC_IMG% PID=%PC_PID% 服务=%PC_SVC%）
+		echo [!] 端口 !PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）
 		echo [!!] 该进程/服务非 wnmmp 组件，停止脚本不会自动处理，请手动停止该外部组件后再重试 stop.bat。
 		set "EXT_OCC=1"
 	)

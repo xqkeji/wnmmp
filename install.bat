@@ -145,55 +145,67 @@ set "PC_IMG="
 set "PC_SVC=N/A"
 call :pid_lookup "%PC_PID%" PC_IMG PC_SVC
 set "PC_SVC=!PC_SVC:Services: =!"
+REM tasklist writes its output in the SYSTEM ANSI code page (936 on Chinese
+REM Windows), NOT the 65001 page we switched to. When a process hosts no
+REM service, column 3 is that page's bytes for the N/A marker, which are
+REM invalid UTF-8 here and echo back as garbage. Service names are plain
+REM ASCII, so anything outside the safe set is reported as N/A instead.
+if not defined PC_SVC set "PC_SVC=N/A"
+if not "!PC_SVC!"=="N/A" (
+	> "%TMP_DIR%\pc_svc.txt" echo(!PC_SVC!
+	findstr /x /r "[a-zA-Z0-9_.,-]*" "%TMP_DIR%\pc_svc.txt" >nul 2>&1
+	if errorlevel 1 set "PC_SVC=N/A"
+)
 if /i "%PC_IMG%"=="nginx.exe" ( set "PC_OURS=1" ) else ( set "PC_OURS=0" )
 if /i "%PC_IMG%"=="mysqld.exe" set "PC_OURS=1"
 if /i "%PC_IMG%"=="mongod.exe" set "PC_OURS=1"
 if /i "%PC_IMG%"=="php-cgi.exe" set "PC_OURS=1"
 if "%PC_OURS%"=="1" (
-	echo [port] %PC_NAME% 端口被 wnmmp 自身组件占用（%PC_IMG% PID=%PC_PID%, 服务=%PC_SVC%）
+	echo [port] !PC_NAME! 端口被 wnmmp 自身组件占用（!PC_IMG! PID=!PC_PID!, 服务=!PC_SVC!）
 	if "%PC_ADMIN%"=="1" (
-		if not "%PC_SVC%"=="N/A" (
+		if not "!PC_SVC!"=="N/A" (
 			for /f "tokens=1 delims=," %%s in ("%PC_SVC%") do (
 				echo [port] 尝试停止服务 %%s ...
 				net stop "%%s" /y >nul 2>&1
 			)
 		)
-		taskkill /f /pid %PC_PID% >nul 2>&1
+		taskkill /f /pid !PC_PID! >nul 2>&1
 	) else (
-		echo [port] 非管理员权限，尝试结束进程 PID=%PC_PID% ...
-		taskkill /f /pid %PC_PID% >nul 2>&1
+		echo [port] 非管理员权限，尝试结束进程 PID=!PC_PID! ...
+		taskkill /f /pid !PC_PID! >nul 2>&1
 	)
 	REM re-check whether the port is now free
 	set "PC_BUSY=0"
 	for /f "tokens=*" %%L in ('netstat -ano 2^>nul ^| findstr /c:":%PC_PORT% " ^| findstr "LISTENING"') do set "PC_BUSY=1"
 	if "!PC_BUSY!"=="0" (
-		echo [port] %PC_NAME% 端口 %PC_PORT% 已释放，继续安装
+		echo [port] !PC_NAME! 端口 !PC_PORT! 已释放，继续安装
 		goto :eof
 	)
 	echo [port] 自动释放失败（服务可能设了自动重启或权限不足），转为手动处理。
 )
 echo.
 echo **************************************************************
-echo * [警告] %PC_NAME% 的端口 %PC_PORT% 已被占用！
-if "%PC_OURS%"=="1" (
-	echo * 占用者：wnmmp 组件 %PC_IMG%，PID=%PC_PID%，服务=%PC_SVC%
-) else (
-	echo * 占用者：%PC_IMG%，PID=%PC_PID%，服务=%PC_SVC%
-	echo * 该进程/服务非 wnmmp 组件，安装程序不会自动停止它，
-	echo * 以免误停你依赖的关键服务（如 IIS、SQL Server 等）。
-)
+echo * [警告] !PC_NAME! 的端口 !PC_PORT! 已被占用！
+REM PC_IMG/PC_PID/PC_SVC come from tasklist and are NOT under our control.
+REM Interpolating them with %var% would expand them at PARSE time, so any
+REM quote / paren / ampersand in the value would break the block and make
+REM cmd treat the tail of a later line as a new command. !var! expands at
+REM RUN time, after parsing, so it cannot do that. Hence: no block here.
+echo * 占用者：!PC_IMG!，PID=!PC_PID!，服务=!PC_SVC!
+if "%PC_OURS%"=="1" echo * 属于 wnmmp 自身组件，可安全停止。
+if not "%PC_OURS%"=="1" echo * 非 wnmmp 组件，安装程序不会自动停止它，以免误停你依赖的关键服务（如 IIS、SQL Server 等）。
 echo * 建议：在 Windows 服务 services.msc 中找到上述服务/进程并停止，再运行 install.bat。
 echo **************************************************************
-choice /C AS /N /M "请选择 [A] 中止安装稍后手动处理  或  [S] 跳过 %PC_NAME% 安装："
+choice /C AS /N /M "请选择 [A] 中止安装稍后手动处理  或  [S] 跳过 !PC_NAME! 安装："
 if errorlevel 2 (
-	echo %DATE% %TIME% [skip] %PC_NAME% 安装被用户跳过（端口 %PC_PORT% 被占用） >> "%TMP_DIR%\install.progress.log"
+	echo %DATE% %TIME% [skip] !PC_NAME! 安装被用户跳过（端口 !PC_PORT! 被占用） >> "%TMP_DIR%\install.progress.log"
 	>>"%SKIP_FILE%" echo %PC_KEY%
 	echo [skip] 已记录：跳过 %PC_NAME% 安装（详见 tmp\skipped.lst）
 	set "%PC_SKIPVAR%=1"
 	goto :eof
 )
 echo [abort] 安装已中止。请处理端口 %PC_PORT% 占用后，重新运行 install.bat。
-echo %DATE% %TIME% [port-check] ABORTED: %PC_NAME% port %PC_PORT% occupied >> "%TMP_DIR%\install.progress.log"
+echo %DATE% %TIME% [port-check] ABORTED: !PC_NAME! port !PC_PORT! occupied >> "%TMP_DIR%\install.progress.log"
 echo 安装已中止。按任意键关闭本窗口...
 pause >nul
 exit
@@ -205,7 +217,11 @@ REM Sets %2=<image.exe>; %3="Services: <svc>" or "N/A"
 :pid_lookup
 set "%~2="
 set "%~3=N/A"
-for /f "tokens=1,3 delims=," %%a in ('tasklist /svc /fi "PID eq %~1" /fo csv /nh 2^>nul') do (
+REM tokens=1,2* and not 1,3: the service column may itself contain commas
+REM (e.g. "svchost.exe","1780","BrokerInfrastructure,DcomLaunch,PlugPlay"),
+REM so field 3 must be captured as *rest of line* into %%c. With tokens=1,3
+REM only %%a/%%b are allocated and the column is chopped at the first comma.
+for /f "tokens=1,2* delims=," %%a in ('tasklist /svc /fi "PID eq %~1" /fo csv /nh 2^>nul') do (
 	set "%~2=%%~a"
 	set "%~3=%%~c"
 )
