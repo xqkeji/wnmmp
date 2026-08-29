@@ -62,7 +62,11 @@ if "%WNMMP_PATH_SYSTEM%"=="1" if "%PC_ADMIN%"=="1" (
 	set "RP_HIVE=HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
 	set "RP_SCOPE=系统"
 )
-if "%WNMMP_PATH_SYSTEM%"=="1" if not "%PC_ADMIN%"=="1" echo "[path] WNMMP_PATH_SYSTEM=1 需要管理员权限，本次仍写入用户 PATH"
+if "%WNMMP_PATH_SYSTEM%"=="1" (
+	if not "%PC_ADMIN%"=="1" (
+		echo [path] WNMMP_PATH_SYSTEM=1 需要管理员权限，本次仍写入用户 PATH
+	)
+)
 
 REM ---- read the current value with delayed expansion OFF: a literal bang in
 REM ---- PATH must not be eaten by the !var! rewriting performed further below.

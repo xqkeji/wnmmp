@@ -91,13 +91,13 @@ if defined NGINX_VERSION (
 
 
 REM ============================ MYSQL ============================
-REM MySQL Innovation 自 2026-07 起改用日历版本号 YY.M.P：26.7.0 = 2026年7月。
-REM 下载路径形如：/get/Downloads/MySQL-26.7/mysql-26.7.0-winx64.zip
-REM 锚点用 "/mysql-"（紧跟版本号），绝不能用 "file=mysql-"：set 的查找串
-REM 不能含 '='（会被误切成 find/replace），也不能含 '*'；且必须带 '*' 吃掉
-REM 锚点之前的整页内容，否则 tokens 会扫到别处的数字、拼出垃圾版本号。
-REM 注意：dev.mysql.com/downloads/mysql/ 常返回 403（带浏览器 UA 也 403），
-REM 探测失败是常态，此时回落到 download-ini.bat 钉死的版本。
+REM MySQL Innovation uses calendar version YY.M.P since 2026-07: 26.7.0 = 2026-07.
+REM Download path: /get/Downloads/MySQL-26.7/mysql-26.7.0-winx64.zip
+REM Anchor is "/mysql-" (right before the version); never use "file=mysql-":
+REM   set's search string must NOT contain '=' (split into find/replace) nor '*'; and must
+REM   include '*' to consume everything before the anchor, else tokens scan other numbers.
+REM   The MySQL download site often returns 403 (even with a browser UA); detection failure
+REM   is normal, fall back to the pinned version in download-ini.bat.
 set "MYSQL_VERSION="
 call :fetch "%GL_DIR%\mysql.html" "https://dev.mysql.com/downloads/mysql/"
 echo [get-latest] mysql  page=!DL_SIZE!B ok=!DL_OK!
