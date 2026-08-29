@@ -68,14 +68,13 @@ REM as [ERROR] so the user always gets a visible prompt instead of a silent
 REM skip. Branching is FLAT (goto-based) on purpose: nested if/else/for blocks
 REM in cmd.exe are a classic source of "else was unexpected" parse crashes.
 REM ===========================================================================
-REM Active extensions: mongodb, apcu, xdebug (zend), psr, xqkeji.
+REM Active extensions: mongodb, apcu, xdebug (zend), xqkeji.
 REM NOTE: zephir_parser is intentionally NOT installed -- xqkeji's prebuilt DLL
 REM is self-contained and no longer depends on it.
 
 call :install_pecl_ext mongodb php_mongodb.dll 2.4.0 php-mongodb ext
 call :install_pecl_ext apcu php_apcu.dll 5.1.28 php-apcu ext
 call :install_pecl_ext xdebug php_xdebug.dll 3.5.3 php-xdebug zend
-call :install_pecl_ext psr php_psr.dll 1.2.0 php-psr ext
 call :install_xqkeji
 
 call "bin\init-composer.bat"

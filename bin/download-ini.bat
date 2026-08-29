@@ -32,7 +32,7 @@ set MYSQL_ZIP_DIR=mysql-26.7.0-winx64
 set NGINX_DOWNLOAD_URL=https://nginx.org/download/nginx-1.31.4.zip
 set NGINX_ZIP_DIR=nginx-1.31.4
 set PHP_DOWNLOAD_URL=https://windows.php.net/downloads/releases/php-8.5.10-nts-Win32-vs17-x64.zip
-REM The 4 PECL extension URLs (mongodb/apcu/xdebug/psr) are
+REM The 3 PECL extension URLs (mongodb/apcu/xdebug) are
 REM no longer pinned here. bin/download-php.bat resolves them at RUNTIME from
 REM the actually-installed php.exe version and auto-matches the latest vs17/
 REM nts/x64 build; if none exists it reports an [ERROR] instead of a silent

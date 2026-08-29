@@ -20,14 +20,12 @@ for %%i in ("%~dp0..\..") do set "HOME_DIR=%%~fi"
 set "PHP_DIR=%HOME_DIR%\php"
 cd /d "!ORIGINAL_DIR!"
 
-REM PIE 是 Symfony/Box 打包的 PHAR，其依赖的 symfony/service-contracts 与
-REM psr 扩展冲突：加载 psr 时 PIE 会拒绝启动。
-REM 这里生成一份去掉 psr 的临时 ini 专供 PIE 使用，不改动用户主 php.ini，
-REM 其他程序仍可正常使用 psr。
-REM 注意：xqkeji 扩展依赖 psr，去掉 psr 后它会告警无法加载，
-REM 因此一并从临时 ini 中移除（PIE 不需要 xqkeji），否则会刷
-REM "Cannot load module xqkeji because required module psr is not loaded"。
-REM 前提：php.ini 必须是 CRLF，否则 findstr 认不出行边界（见 .gitattributes）。
+REM PIE 是 Symfony/Box 打包的 PHAR，历史上其依赖的 symfony/service-contracts
+REM 与 psr 扩展冲突：加载 psr 时 PIE 会拒绝启动。自本版本起 psr 扩展不再随环境
+REM 安装（xqkeji v1.1.2 起已不再依赖 psr），默认情况下不再有冲突。
+REM 此处仍生成一份临时 ini 专供 PIE 使用，去掉 psr 与 xqkeji 两行（防御：老版本
+REM 升级或手动装了 psr 时仍不拖累 PIE；xqkeji 在 PIE 中用不到故一并移除），
+REM 不改动用户主 php.ini。前提：php.ini 必须是 CRLF（见 .gitattributes）。
 set "PHP_INI=%HOME_DIR%\etc\php\php.ini"
 set "PIE_INI=%TEMP%\wnmmp-pie-php.ini"
 set "PIE_SZ=0"
