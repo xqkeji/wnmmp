@@ -22,7 +22,6 @@ REM hits an invalid path. Inherited by every call'd child script too.
 if not defined HOME set "HOME=%TMP_DIR%"
 if not defined TMP_DIR set "TMP_DIR=%~dp0tmp"
 if not defined DOWNLOAD_DIR set "DOWNLOAD_DIR=%TMP_DIR%\download"
-if not defined GL_DIR set "GL_DIR=%TMP_DIR%\download"
 set "PHP_DIR=%HOME_DIR%\php"
 set "PHP_EXT_DIR=%HOME_DIR%\php\ext"
 
@@ -159,35 +158,30 @@ goto :eof
 
 REM ===================== helper :install_xqkeji =====================
 REM xqkeji is a custom gitee extension whose prebuilt DLL is PHP-version
-REM specific. The PHP version we installed was chosen FROM xqkeji's gitee tags
-REM (get-latest.bat :xqkeji_targets set XQ_PHP_MM + XQ_TAG). We reuse XQ_TAG
-REM directly so the DLL always fits the running build; if that probe failed we
-REM fall back to a runtime :xqkeji_detect, then to the pinned URL. Flat goto
-REM branching throughout (no nested if/for/else).
+REM specific: the gitee tag names the target PHP in its -phpMM suffix
+REM (e.g. v1.1.2-php8.5). The tag is declared in wnmmp.ini (key: xqkeji) and
+REM arrives here as CFG_xqkeji via download-ini.bat, so NOTHING probes the
+REM network. The old :xqkeji_detect (gitee tags API) was removed: gitee rate
+REM limits anonymous calls, and a failed probe used to leave an EMPTY tag
+REM which then built a URL with no tag in it and 404'd.
+REM
+REM PHP_MM comes from the ACTUALLY installed php.exe (see main flow), so a
+REM tag/PHP mismatch is reported before downloading.
 :install_xqkeji
 echo [php] ===^> step: xqkeji
 if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
 	echo [php] xqkeji already present, skip
 	goto :eof
 )
-REM ---- resolve the gitee tag for the PHP we just installed ----
-REM Prefer XQ_TAG from get-latest.bat (:xqkeji_targets), which already picked
-REM BOTH the PHP_MM we downloaded and the matching xqkeji build. Fall back to
-REM a runtime :xqkeji_detect only if that probe failed (gitee unreachable).
-if defined XQ_TAG if not "%XQ_TAG%"=="" (
-	set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%XQ_TAG%.zip"
-	echo [php] xqkeji 标签 = %XQ_TAG% ^(gitee 探测得到, php %PHP_MM%^)
-) else (
-	set "XQ_BESTKEY=0"
-	call :xqkeji_detect
-	if defined XQ_TAG if not "%XQ_TAG%"=="" (
-		set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%XQ_TAG%.zip"
-		echo [php] xqkeji 自动选标签 = %XQ_TAG% ^(php %PHP_MM%^)
-	) else (
-		if not defined PHP_XQKEJI_DOWNLOAD_URL goto xqkeji_nourl
-		echo [php] xqkeji 使用固定地址 ^(gitee 标签探测失败，回退^)
-	)
-)
+if "%CFG_xqkeji%"=="" goto xqkeji_nourl
+set "XQ_TAG=%CFG_xqkeji%"
+set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%XQ_TAG%.zip"
+echo [php] xqkeji 标签 = %XQ_TAG% ^(wnmmp.ini, php %PHP_MM%^)
+echo %XQ_TAG%| findstr /i /c:"-php%PHP_MM%" >nul
+if not errorlevel 1 goto xqkeji_tag_ok
+echo [WARN] xqkeji 标签 %XQ_TAG% 与已安装 PHP %PHP_MM% 不匹配
+echo [WARN] 请检查 wnmmp.ini 里 xqkeji 与 php 两项是否配套
+:xqkeji_tag_ok
 echo [php] downloading xqkeji ^(gitee^)...
 wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O "%TMP_DIR%\download\php-xqkeji.zip" "%PHP_XQKEJI_DOWNLOAD_URL%"
 if not "!errorlevel!"=="0" goto xqkeji_failed
@@ -225,46 +219,6 @@ call :disable_ext xqkeji
 goto :eof
 
 
-REM ===================== helper :xqkeji_detect =====================
-REM Queries the public gitee tags API and keeps the HIGHEST X.Y.Z whose tag
-REM ends in -php%PHP_MM% (the PHP version the prebuilt DLL targets). Sets
-REM XQ_TAG on success. Needs delayed expansion (enabled by caller). Does NOT
-REM call setlocal -- the caller owns the environment. The gitee API may be
-REM rate-limited/unreachable; on any failure we simply leave XQ_TAG unset and
-REM the caller falls back to its pinned URL.
-:xqkeji_detect
-set "XQ_BESTKEY=0"
-set "XQ_TAGS=%GL_DIR%\xqkeji.tags"
-if exist "%XQ_TAGS%" del "%XQ_TAGS%" >nul 2>&1
-wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate --timeout=30 --tries=2 -q -O "%XQ_TAGS%" "https://gitee.com/api/v5/repos/xqkeji/php-xqkeji/tags?per_page=100" 2>nul
-if not exist "%XQ_TAGS%" goto :eof
-for %%S in ("%XQ_TAGS%") do set "XQ_SIZE=%%~zS"
-if "!XQ_SIZE!"=="0" goto :eof
-REM gitee returns compact JSON on ONE line. cmd does NOT escape quotes with
-REM a backslash: a pattern containing \" leaves cmd's quote state stuck ON,
-REM so it swallows the rest of the line and passes 2>nul / | / > to grep as
-REM literal arguments --  grep: 2>nul: No such file or directory  -- and the
-REM tag list is never written, so we silently fall back to the pinned URL.
-REM Fix: a pattern with NO double quote in it; grep -oE then prints the BARE
-REM tag name, e.g. v1.1.2-php8.5. -E is mandatory: in BRE '+' is not a
-REM quantifier and the very same pattern matches nothing at all. Pipe it
-REM straight into for /f instead of a temp file -- mingw writes LF-only and
-REM for /f over an LF-only FILE is not dependable here.
-for /f "eol= delims=" %%l in ('grep -oE "[nv0-9][0-9.]+-php%PHP_MM%" "%XQ_TAGS%" 2^>nul') do (
-	REM grep -oE already emitted the bare tag, e.g. v1.1.2-php8.5
-	set "TAG=%%l"
-	set "VER=!TAG:*v=!"
-	set "VER=!VER:-php%PHP_MM%=!"
-	for /f "tokens=1,2,3 delims=." %%a in ("!VER!") do (
-		set "VX=%%a" & set "VY=%%b" & set "VZ=%%c"
-	)
-	set /a "VKEY=!VX!*1000000+!VY!*10000+!VZ!*100" 2>nul
-	if !VKEY! gtr !XQ_BESTKEY! (
-		set "XQ_BESTKEY=!VKEY!"
-		set "XQ_TAG=!TAG!"
-	)
-)
-goto :eof
 
 
 REM ===================== helper :disable_ext =====================

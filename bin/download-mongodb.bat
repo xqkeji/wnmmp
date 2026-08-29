@@ -17,8 +17,6 @@ if not defined TMP_DIR set "TMP_DIR=%~dp0tmp"
 if not defined DOWNLOAD_DIR set "DOWNLOAD_DIR=%TMP_DIR%\download"
 
 set "MONGODB_DIR=%HOME_DIR%\mongodb"
-set "MONGODB_IS_OLD=0"
-set "MONGOSH_IS_OLD=0"
 
 REM ---- resume guard: skip only when finalized with sentinel ----
 set "MONGODB_INSTALLED=0"
@@ -35,21 +33,14 @@ REM ============================ mongodb server ============================
 set "USED_URL=%MONGODB_DOWNLOAD_URL%"
 wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongodb.zip %MONGODB_DOWNLOAD_URL%
 if !errorlevel! neq 0 (
-	echo [WARN] mongodb 下载失败，尝试旧版 5.0.33...
-	del %TMP_DIR%\download\mongodb.zip 2>nul
-	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongodb.zip %MONGODB_OLD_DOWNLOAD_URL%
-	if !errorlevel! neq 0 (
-		echo.
-		echo [ERROR] mongodb 下载失败！安装未完成。
-		echo [ERROR] URL: %MONGODB_DOWNLOAD_URL% 及旧版 %MONGODB_OLD_DOWNLOAD_URL%
-		echo [ERROR] 请检查网络后重新运行 install.bat（支持断点续传）。
-		echo %DATE% %TIME% [mongodb] download FAILED >> "%TMP_DIR%\install.errors.log"
-		rd "%MONGODB_DIR%" 2>nul
-		pause
-		exit
-	)
-	set "MONGODB_IS_OLD=1"
-	set "USED_URL=%MONGODB_OLD_DOWNLOAD_URL%"
+	echo.
+	echo [ERROR] mongodb 下载失败！安装未完成。
+	echo [ERROR] URL: %MONGODB_DOWNLOAD_URL%
+	echo [ERROR] 请检查网络后重新运行 install.bat（支持断点续传）。
+	echo %DATE% %TIME% [mongodb] download FAILED >> "%TMP_DIR%\install.errors.log"
+	rd "%MONGODB_DIR%" 2>nul
+	pause
+	exit
 )
 unzip -o %TMP_DIR%\download\mongodb.zip -d %TMP_DIR%\download
 if !errorlevel! neq 0 (
@@ -71,21 +62,14 @@ REM ============================== mongosh ===============================
 set "SH_USED_URL=%MONGOSH_DOWNLOAD_URL%"
 wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongosh.zip %MONGOSH_DOWNLOAD_URL%
 if !errorlevel! neq 0 (
-	echo [WARN] mongosh 下载失败，尝试旧版 1.10.6...
-	del %TMP_DIR%\download\mongosh.zip 2>nul
-	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O %TMP_DIR%\download\mongosh.zip %MONGOSH_OLD_DOWNLOAD_URL%
-	if !errorlevel! neq 0 (
-		echo.
-		echo [ERROR] mongosh 下载失败！安装未完成。
-		echo [ERROR] URL: %MONGOSH_DOWNLOAD_URL% 及旧版 %MONGOSH_OLD_DOWNLOAD_URL%
-		echo [ERROR] 请检查网络后重新运行 install.bat（支持断点续传）。
-		echo %DATE% %TIME% [mongosh] download FAILED >> "%TMP_DIR%\install.errors.log"
-		rd "%MONGODB_DIR%" 2>nul
-		pause
-		exit
-	)
-	set "MONGOSH_IS_OLD=1"
-	set "SH_USED_URL=%MONGOSH_OLD_DOWNLOAD_URL%"
+	echo.
+	echo [ERROR] mongosh 下载失败！安装未完成。
+	echo [ERROR] URL: %MONGOSH_DOWNLOAD_URL%
+	echo [ERROR] 请检查网络后重新运行 install.bat（支持断点续传）。
+	echo %DATE% %TIME% [mongosh] download FAILED >> "%TMP_DIR%\install.errors.log"
+	rd "%MONGODB_DIR%" 2>nul
+	pause
+	exit
 )
 unzip -o %TMP_DIR%\download\mongosh.zip -d %TMP_DIR%\download
 if !errorlevel! neq 0 (
@@ -103,21 +87,10 @@ if !errorlevel! neq 0 (
 	)
 )
 
-if !MONGODB_IS_OLD! equ 0 (
-	xcopy "%TMP_DIR%\download\%MONGODB_ZIP_DIR%\*" "%MONGODB_DIR%" /E /H /Y /I
-) else (
-	xcopy "%TMP_DIR%\download\%MONGODB_OLD_ZIP_DIR%\*" "%MONGODB_DIR%" /E /H /Y /I
-)
-if !MONGOSH_IS_OLD! equ 0 (
-	copy "%TMP_DIR%\download\%MONGOSH_ZIP_DIR%\bin\mongosh.exe" "%MONGODB_DIR%\bin\mongosh.exe" /Y
-) else (
-	copy "%TMP_DIR%\download\%MONGOSH_OLD_ZIP_DIR%\bin\mongosh.exe" "%MONGODB_DIR%\bin\mongosh.exe" /Y
-)
-
-if !MONGODB_IS_OLD! equ 0 ( set "LOG_M=%MONGODB_ZIP_DIR%" ) else ( set "LOG_M=%MONGODB_OLD_ZIP_DIR%" )
-if !MONGOSH_IS_OLD! equ 0 ( set "LOG_S=%MONGOSH_ZIP_DIR%" ) else ( set "LOG_S=%MONGOSH_OLD_ZIP_DIR%" )
+xcopy "%TMP_DIR%\download\%MONGODB_ZIP_DIR%\*" "%MONGODB_DIR%" /E /H /Y /I
+copy "%TMP_DIR%\download\%MONGOSH_ZIP_DIR%\bin\mongosh.exe" "%MONGODB_DIR%\bin\mongosh.exe" /Y
 echo done > "%MONGODB_DIR%\_installed"
-echo %DATE% %TIME% [mongodb] installed !LOG_M! / mongosh !LOG_S! >> "%TMP_DIR%\install.progress.log"
+echo %DATE% %TIME% [mongodb] installed %MONGODB_ZIP_DIR% / mongosh %MONGOSH_ZIP_DIR% >> "%TMP_DIR%\install.progress.log"
 :mongo_skip
 
 
