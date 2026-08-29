@@ -174,13 +174,13 @@ REM ---- resolve the gitee tag for the PHP we just installed ----
 REM Prefer XQ_TAG from get-latest.bat (:xqkeji_targets), which already picked
 REM BOTH the PHP_MM we downloaded and the matching xqkeji build. Fall back to
 REM a runtime :xqkeji_detect only if that probe failed (gitee unreachable).
-if defined XQ_TAG (
+if defined XQ_TAG if not "%XQ_TAG%"=="" (
 	set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%XQ_TAG%.zip"
 	echo [php] xqkeji 标签 = %XQ_TAG% ^(gitee 探测得到, php %PHP_MM%^)
 ) else (
 	set "XQ_BESTKEY=0"
 	call :xqkeji_detect
-	if defined XQ_TAG (
+	if defined XQ_TAG if not "%XQ_TAG%"=="" (
 		set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%XQ_TAG%.zip"
 		echo [php] xqkeji 自动选标签 = %XQ_TAG% ^(php %PHP_MM%^)
 	) else (
@@ -233,7 +233,6 @@ REM call setlocal -- the caller owns the environment. The gitee API may be
 REM rate-limited/unreachable; on any failure we simply leave XQ_TAG unset and
 REM the caller falls back to its pinned URL.
 :xqkeji_detect
-set "XQ_TAG="
 set "XQ_BESTKEY=0"
 set "XQ_TAGS=%GL_DIR%\xqkeji.tags"
 if exist "%XQ_TAGS%" del "%XQ_TAGS%" >nul 2>&1

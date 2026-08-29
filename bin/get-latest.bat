@@ -158,14 +158,14 @@ if "!DL_OK!"=="1" (
     )
     REM Keep ONLY the xqkeji-supported major.minor (no-op when XQ_PHP_MM empty).
     if exist "%GL_DIR%\php.vers.xq" del "%GL_DIR%\php.vers.xq"
-    if defined XQ_PHP_MM (
+    if defined XQ_PHP_MM if not "%XQ_PHP_MM%"=="" (
       for /f "usebackq" %%v in ("%GL_DIR%\php.vers") do (
         for /f "tokens=1,2 delims=." %%a in ("%%v") do (
           if "%%a.%%b"=="!XQ_PHP_MM!" (>>"%GL_DIR%\php.vers.xq" echo %%v)
         )
       )
     )
-    if defined XQ_PHP_MM (
+    if defined XQ_PHP_MM if not "%XQ_PHP_MM%"=="" (
       if exist "%GL_DIR%\php.vers.xq" call :highest "%GL_DIR%\php.vers.xq" PHP_VERSION
     ) else (
       if exist "%GL_DIR%\php.vers" call :highest "%GL_DIR%\php.vers" PHP_VERSION
@@ -174,7 +174,7 @@ if "!DL_OK!"=="1" (
 )
 if defined PHP_VERSION (
   set "PHP_DOWNLOAD_URL=https://windows.php.net/downloads/releases/php-%PHP_VERSION%-nts-Win32-vs17-x64.zip"
-  if defined XQ_PHP_MM (
+  if defined XQ_PHP_MM if not "%XQ_PHP_MM%"=="" (
     set "PHP_MM=!XQ_PHP_MM!"
     echo [get-latest] php = %PHP_VERSION%（xqkeji php !XQ_PHP_MM!, nts/vs17/x64）
     echo [get-latest] xqkeji 标签 = !XQ_TAG!
@@ -288,8 +288,6 @@ REM                   exact gitee tag we download). download-php.bat reuses it.
 REM Needs delayed expansion (caller enabled it). On any failure both vars stay
 REM UNSET and the caller keeps its pinned PHP default -- never a hard error.
 :xqkeji_targets
-set "XQ_TAG="
-set "XQ_PHP_MM="
 set "XQ_BESTKEY=0"
 set "XQ_MMKEY=0"
 set "XQ_TAGS=%GL_DIR%\xqkeji.tags"
