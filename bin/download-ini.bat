@@ -28,13 +28,24 @@ REM source of truth and NOTHING here touches the network.
 REM
 REM To upgrade a component edit wnmmp.ini, not this file.
 REM
-REM NOTE on paths: %~dp0 is used instead of bare/relative names so this works
-REM no matter what the current directory happens to be when install.bat runs.
+REM NOTE on paths: do NOT trust %~dp0 in this script. When it is reached via a
+REM bare `call "download-ini.bat"`, %0 carries NO path component, so %~dp0
+REM silently expands to the CURRENT directory (the wnmmp root) instead of bin\,
+REM and the parser is then looked for in the wrong place. The invariant we CAN
+REM rely on is that install.bat does `cd /d %~dp0`, so the CWD is the wnmmp
+REM root and "bin\..." is the correct spelling. The extra candidates below are
+REM fallbacks for unusual CWDs.
 REM ===========================================================================
 
-if not defined HOME_DIR for %%i in ("%~dp0..") do set "HOME_DIR=%%~fi"
+if not defined HOME_DIR set "HOME_DIR=%CD%"
 
-call "%~dp0wnmmp-ini.bat"
+set "INI_PARSER="
+if exist "bin\wnmmp-ini.bat" set "INI_PARSER=bin\wnmmp-ini.bat"
+if not defined INI_PARSER if exist "%~dp0wnmmp-ini.bat" set "INI_PARSER=%~dp0wnmmp-ini.bat"
+if not defined INI_PARSER if exist "%~dp0bin\wnmmp-ini.bat" set "INI_PARSER=%~dp0bin\wnmmp-ini.bat"
+if not defined INI_PARSER goto ini_parser_missing
+
+call "%INI_PARSER%"
 
 REM ---------------------------------------------------------------------------
 REM Validate: every component needs a non-empty version before we build URLs,
@@ -89,6 +100,14 @@ set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/arch
 set "PHP_XQKEJI_ZIP_DIR=php-xqkeji-%CFG_xqkeji%"
 
 goto :eof
+
+:ini_parser_missing
+echo.
+echo [ERROR] cannot locate bin\wnmmp-ini.bat
+echo [ERROR] run install.bat from the wnmmp root directory.
+echo.
+pause
+exit 1
 
 :need
 if not "%~2"=="" goto :eof

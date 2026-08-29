@@ -39,8 +39,14 @@ REM     and that ambiguity is what once let a failed probe masquerade as a
 REM     valid version and build a broken download URL.
 REM ===========================================================================
 
-if not defined HOME_DIR for %%i in ("%~dp0..") do set "HOME_DIR=%%~fi"
+REM Same %~dp0 caveat as in download-ini.bat: if this script is ever reached by
+REM a bare name, %0 has no path and %~dp0 degrades to the current directory, so
+REM "%~dp0.." would resolve to the PARENT of the wnmmp root. HOME_DIR is
+REM normally already exported by install.bat; %CD% is the safe fallback because
+REM install.bat does `cd /d %~dp0` (CWD = wnmmp root).
+if not defined HOME_DIR set "HOME_DIR=%CD%"
 set "WNMMP_INI=%HOME_DIR%\wnmmp.ini"
+if not exist "%WNMMP_INI%" if exist "%CD%\wnmmp.ini" set "WNMMP_INI=%CD%\wnmmp.ini"
 
 if not exist "%WNMMP_INI%" goto ini_missing
 
