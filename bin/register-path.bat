@@ -79,9 +79,18 @@ REM ---- parse-safe backup: set VAR prints the raw value, nothing is re-parsed
 set "RP_BAK=%TMP_DIR%\path-backup.txt"
 set RP_OLD > "%RP_BAK%"
 
-REM ---- bail out rather than corrupt an environment we cannot round-trip
+REM ---- bail out rather than corrupt an environment we cannot round-trip.
+REM ---- The '!' test MUST run with delayed expansion OFF, exactly like the
+REM ---- reg query calls above. With it ON, a literal '!' in a line is deleted
+REM ---- (an unpaired '!' has no meaning), which ALSO merged the /c: operand and
+REM ---- the file operand into a single token -- findstr then got no file, fell
+REM ---- back to reading STDIN, and the installer hung forever at 0% CPU.
+set "RP_BANG_RC=1"
+setlocal disabledelayedexpansion
 findstr /c:"!" "%RP_BAK%" >nul 2>&1
-if not errorlevel 1 (
+set "RP_BANG_RC=%errorlevel%"
+endlocal & set "RP_BANG_RC=%RP_BANG_RC%"
+if "%RP_BANG_RC%"=="0" (
 	echo "[path] 检测到 PATH 中含感叹号，脚本无法安全改写，已跳过"
 	echo "[path] 请手动把 %RP_DIR% 移动到 PATH 的最前面"
 	goto :eof
