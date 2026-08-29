@@ -242,17 +242,19 @@ wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-cer
 if not exist "%XQ_TAGS%" goto :eof
 for %%S in ("%XQ_TAGS%") do set "XQ_SIZE=%%~zS"
 if "!XQ_SIZE!"=="0" goto :eof
-REM gitee returns COMPACT JSON on ONE line, so a literal name search matches the
-REM whole line and would otherwise capture the WRONG (first) tag. grep -o emits
-REM exactly ONE "name":"..." match per line; we then keep only the tags that
-REM target the installed PHP (php%PHP_MM%). If grep is unavailable the .lines
-REM file stays empty and we fall back to the pinned URL (v1.1.1-php8.5).
-grep -o "\"name\":\"[^\"]*\"" "%XQ_TAGS%" 2>nul | findstr /c:"php%PHP_MM%" > "%GL_DIR%\xqkeji.lines" 2>nul
-if not exist "%GL_DIR%\xqkeji.lines" goto :eof
-for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\xqkeji.lines") do (
-	set "LN=%%l"
-	set "LN=!LN:*":"=!"
-	set "TAG=!LN:"=!"
+REM gitee returns compact JSON on ONE line. cmd does NOT escape quotes with
+REM a backslash: a pattern containing \" leaves cmd's quote state stuck ON,
+REM so it swallows the rest of the line and passes 2>nul / | / > to grep as
+REM literal arguments --  grep: 2>nul: No such file or directory  -- and the
+REM tag list is never written, so we silently fall back to the pinned URL.
+REM Fix: a pattern with NO double quote in it; grep -oE then prints the BARE
+REM tag name, e.g. v1.1.2-php8.5. -E is mandatory: in BRE '+' is not a
+REM quantifier and the very same pattern matches nothing at all. Pipe it
+REM straight into for /f instead of a temp file -- mingw writes LF-only and
+REM for /f over an LF-only FILE is not dependable here.
+for /f "eol= delims=" %%l in ('grep -oE "[nv0-9][0-9.]+-php%PHP_MM%" "%XQ_TAGS%" 2^>nul') do (
+	REM grep -oE already emitted the bare tag, e.g. v1.1.2-php8.5
+	set "TAG=%%l"
 	set "VER=!TAG:*v=!"
 	set "VER=!VER:-php%PHP_MM%=!"
 	for /f "tokens=1,2,3 delims=." %%a in ("!VER!") do (

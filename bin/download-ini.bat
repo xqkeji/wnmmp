@@ -39,8 +39,8 @@ REM nts/x64 build; if none exists it reports an [ERROR] instead of a silent
 REM skip. Only php_xqkeji (gitee) is pinned below.
 REM Auto-detected at RUNTIME in download-php.bat (:xqkeji_detect) -- this is
 REM only the safe FALLBACK used when the gitee tags API is unreachable.
-set PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/v1.1.1-php8.5.zip
-set PHP_XQKEJI_ZIP_DIR=php-xqkeji-v1.1.1-php8.5
+set PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/v1.1.2-php8.5.zip
+set PHP_XQKEJI_ZIP_DIR=php-xqkeji-v1.1.2-php8.5
 
 REM ---------------------------------------------------------------------------
 REM Resolve latest versions for every component. get-latest.bat overrides the

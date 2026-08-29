@@ -298,15 +298,20 @@ wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-cer
 if not exist "%XQ_TAGS%" goto :eof
 for %%S in ("%XQ_TAGS%") do set "XQSZ=%%~zS"
 if "!XQSZ!"=="0" goto :eof
-REM gitee returns compact JSON on one line; grep -o emits exactly ONE
-REM "name":"..." per line so we can loop tags individually.
-grep -o "\"name\":\"[^\"]*\"" "%XQ_TAGS%" 2>nul > "%GL_DIR%\xqkeji.all"
-if not exist "%GL_DIR%\xqkeji.all" goto :eof
+REM gitee returns compact JSON on ONE line. cmd does NOT escape quotes with
+REM a backslash: a pattern containing \" leaves cmd's quote state stuck ON,
+REM so it swallows the rest of the line and passes 2>nul / | / > to grep as
+REM literal arguments --  grep: 2>nul: No such file or directory  -- and the
+REM tag list is never written, so we silently fall back to the pinned URL.
+REM Fix: a pattern with NO double quote in it; grep -oE then prints the BARE
+REM tag name, e.g. v1.1.2-php8.5. -E is mandatory: in BRE '+' is not a
+REM quantifier and the very same pattern matches nothing at all. Pipe it
+REM straight into for /f instead of a temp file -- mingw writes LF-only and
+REM for /f over an LF-only FILE is not dependable here.
 REM Pass 1: highest php<MM> among all tags = the PHP we will install.
-for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\xqkeji.all") do (
-  set "LN=%%l"
-  REM each line is "name":"<tag>"; take token2 after ':' and strip quotes
-  for /f "tokens=2 delims=:" %%t in ("!LN!") do set "TAG=%%~t"
+for /f "eol= delims=" %%l in ('grep -oE "[nv0-9][0-9.]+-php[0-9.]+" "%XQ_TAGS%" 2^>nul') do (
+  REM grep -oE already emitted the bare tag, e.g. v1.1.2-php8.5
+  set "TAG=%%l"
   set "MM=!TAG:*-php=!"
   if not "!MM!"=="!TAG!" (
     for /f "tokens=1,2 delims=." %%a in ("!MM!") do (
@@ -322,10 +327,9 @@ for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\xqkeji.all") do (
 )
 if not defined XQ_PHP_MM goto :eof
 REM Pass 2: among tags for that PHP_MM, highest xqkeji X.Y.Z -> XQ_TAG.
-for /f "usebackq eol= delims=" %%l in ("%GL_DIR%\xqkeji.all") do (
-  set "LN=%%l"
-  REM each line is "name":"<tag>"; take token2 after ':' and strip quotes
-  for /f "tokens=2 delims=:" %%t in ("!LN!") do set "TAG=%%~t"
+for /f "eol= delims=" %%l in ('grep -oE "[nv0-9][0-9.]+-php[0-9.]+" "%XQ_TAGS%" 2^>nul') do (
+  REM grep -oE already emitted the bare tag, e.g. v1.1.2-php8.5
+  set "TAG=%%l"
   set "MM=!TAG:*-php=!"
   if "!MM!"=="!XQ_PHP_MM!" (
     set "VER=!TAG:*v=!"
