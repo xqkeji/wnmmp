@@ -14,6 +14,12 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 setlocal enabledelayedexpansion
+REM ---- ANSI status colours (harmless if the console lacks VT support):
+REM ---- C_OK=green(success) C_SKIP=red(skip/error) C_WARN=yellow(warning) C_RST=reset
+set "C_OK=[92m"
+set "C_SKIP=[91m"
+set "C_WARN=[93m"
+set "C_RST=[0m"
 cd /d %~dp0
 
 REM set variable
@@ -71,7 +77,8 @@ if not "%SKIP_MONGODB%"=="1" call "bin\init-mongodb.bat"
 REM mysql init (skip if mysql was skipped)
 if not "%SKIP_MYSQL%"=="1" call "bin\init-mysql.bat"
 copy nul %TMP_DIR%\install.lock > nul
-echo "安装完成！"
+set "MSG1=%C_OK%[√] 安装完成！%C_RST%"
+echo !MSG1!
 echo %DATE% %TIME% [bootstrap] vc-redist + downloads + init done >> "%TMP_DIR%\install.progress.log"
 echo === wnmmp install complete %DATE% %TIME% === >> "%TMP_DIR%\install.progress.log"
 
@@ -82,7 +89,7 @@ if exist "%ERR_FILE%" (
 	if !ERR_SIZE! gtr 0 (
 		echo.
 		echo **************************************************************
-		set "MSG1=* [警告] 以下组件在安装过程中下载/安装失败："
+		set "MSG1=%C_WARN%* [警告] 以下组件在安装过程中下载/安装失败：%C_RST%"
 		echo !MSG1!
 		echo **************************************************************
 		type "%ERR_FILE%"
@@ -115,7 +122,8 @@ REM clear variable
 set HOME_DIR=
 set PATH=
 
-echo 安装完成。按任意键关闭本窗口...
+set "MSG1=%C_OK%[√] 安装完成。按任意键关闭本窗口...%C_RST%"
+echo !MSG1!
 pause >nul
 goto :eof
 
@@ -132,7 +140,7 @@ REM honor a previously recorded skip (do not re-prompt on re-run)
 if exist "%SKIP_FILE%" (
 	findstr /x /i /c:"%PC_KEY%" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		set "MSG1=[skip] %PC_NAME% 已在跳过清单（tmp\skipped.lst），本次不安装/不检测"
+		set "MSG1=%C_SKIP%[×] [skip] %PC_NAME% 已在跳过清单（tmp\skipped.lst），本次不安装/不检测%C_RST%"
 		echo !MSG1!
 		set "%PC_SKIPVAR%=1"
 		goto :eof
@@ -171,7 +179,7 @@ if /i "!PC_IMG!"=="mysqld.exe" set "PC_OURS=1"
 if /i "!PC_IMG!"=="mongod.exe" set "PC_OURS=1"
 if /i "!PC_IMG!"=="php-cgi.exe" set "PC_OURS=1"
 if "!PC_OURS!"=="1" (
-	set "MSG1=[port] !PC_NAME! 端口被 wnmmp 自身组件占用（!PC_IMG! PID=!PC_PID!, 服务=!PC_SVC!）"
+	set "MSG1=%C_WARN%[port] !PC_NAME! 端口被 wnmmp 自身组件占用（!PC_IMG! PID=!PC_PID!, 服务=!PC_SVC!）%C_RST%"
 	echo !MSG1!
 	if "!PC_ADMIN!"=="1" (
 		if not "!PC_SVC!"=="N/A" (
@@ -195,12 +203,12 @@ if "!PC_OURS!"=="1" (
 		echo !MSG1!
 		goto :eof
 	)
-	set "MSG1=[port] 自动释放失败（服务可能设了自动重启或权限不足），转为手动处理。"
+	set "MSG1=%C_WARN%[port] 自动释放失败（服务可能设了自动重启或权限不足），转为手动处理。%C_RST%"
 	echo !MSG1!
 )
 echo.
 echo **************************************************************
-set "MSG1=* [警告] !PC_NAME! 的端口 !PC_PORT! 已被占用！"
+set "MSG1=%C_WARN%* [警告] !PC_NAME! 的端口 !PC_PORT! 已被占用！%C_RST%"
 echo !MSG1!
 REM PC_IMG/PC_PID/PC_SVC/PC_OURS all derive from tasklist or decisions and are
 REM NOT under our control. Interpolating them with %var% would expand at PARSE
@@ -225,15 +233,15 @@ choice /C AS /N /M "请选择 [A] 中止安装稍后手动处理  或  [S] 跳�
 if errorlevel 2 (
 	echo %DATE% %TIME% [skip] !PC_NAME! 安装被用户跳过（端口 !PC_PORT! 被占用） >> "%TMP_DIR%\install.progress.log"
 	>>"%SKIP_FILE%" echo %PC_KEY%
-	set "MSG1=[skip] 已记录：跳过 %PC_NAME% 安装（详见 tmp\skipped.lst）"
+	set "MSG1=%C_SKIP%[×] [skip] 已记录：跳过 %PC_NAME% 安装（详见 tmp\skipped.lst）%C_RST%"
 	echo !MSG1!
 	set "%PC_SKIPVAR%=1"
 	goto :eof
 )
-set "MSG1=[abort] 安装已中止。请处理端口 %PC_PORT% 占用后，重新运行 install.bat。"
+set "MSG1=%C_SKIP%[错误] 安装已中止。请处理端口 %PC_PORT% 占用后，重新运行 install.bat。%C_RST%"
 echo !MSG1!
 echo %DATE% %TIME% [port-check] ABORTED: !PC_NAME! port !PC_PORT! occupied >> "%TMP_DIR%\install.progress.log"
-set "MSG1=安装已中止。按任意键关闭本窗口..."
+set "MSG1=%C_SKIP%安装已中止。按任意键关闭本窗口...%C_RST%"
 echo !MSG1!
 pause >nul
 exit
