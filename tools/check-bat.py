@@ -51,6 +51,15 @@ def check_file(path):
     lf_only = raw.count(b"\n") - crlf
     if lf_only:
         errs.append("LF-only line endings: %d (findstr/for /f break)" % lf_only)
+    # bare CR: a \r not followed by \n (e.g. the \r\r\n double-CR corruption).
+    # A clean CRLF file has ZERO bare CRs; any (other than the \r of each \r\n)
+    # means the line endings are damaged and cmd.exe will mis-parse.
+    bare = sum(
+        1 for i in range(len(raw) - 1)
+        if raw[i:i + 1] == b"\r" and raw[i + 1:i + 2] != b"\n"
+    )
+    if bare:
+        errs.append("bare CR (not part of CRLF): %d -- double-CR / corrupt line endings" % bare)
 
     text = decode(raw)
     lines = text.replace("\r\n", "\n").split("\n")
