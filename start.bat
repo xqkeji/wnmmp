@@ -18,6 +18,7 @@ REM ---- ANSI status colours (harmless if the console lacks VT support:
 REM ---- C_OK/C_SKIP stay empty and the [OK]/[SKIP] glyph just shows plain).
 set "C_OK=[92m"
 set "C_SKIP=[91m"
+set "C_WARN=[93m"
 set "C_RST=[0m"
 cd /d %~dp0
 
@@ -46,10 +47,10 @@ echo  WNMMP 启动清单（仅启动已安装组件，跳过清单见 tmp\skippe
 for %%K in (nginx mongodb mysql php-cgi) do (
 	findstr /x /i /c:"%%K" "%SKIP_FILE%" >nul 2>&1
 	if errorlevel 1 (
-		set "MSG1=  - %%K  %C_OK%√ 将启动"
+		set "MSG1=  - %%K  将启动"
 		echo !MSG1!
 	) else (
-		set "MSG1=  - %%K  %C_SKIP%× 跳过（已在 tmp\skipped.lst）"
+		set "MSG1=  - %%K  跳过（已在 tmp\skipped.lst）"
 		echo !MSG1!
 	)
 )
@@ -166,7 +167,7 @@ goto :eof
 
 REM Args: none. Port stayed busy after stopping the owner.
 :svc_msg_still_held
-set "MSG1=[警告] !SVC_NAME! 端口 !SVC_PORT! 停止后仍未释放（可能服务自动重启或权限不足），跳过启动。"
+set "MSG1=%C_WARN%[警告] !SVC_NAME! 端口 !SVC_PORT! 停止后仍未释放（可能服务自动重启或权限不足），跳过启动。%C_RST%"
 echo !MSG1!
 goto :eof
 
@@ -178,7 +179,7 @@ goto :eof
 
 REM Args: none. External owner - reported only, never stopped.
 :svc_msg_external
-set "MSG1=[警告] !SVC_NAME! 端口 !SVC_PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）"
+set "MSG1=%C_WARN%[警告] !SVC_NAME! 端口 !SVC_PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）%C_RST%"
 set "MSG2=[提示] 该进程/服务非 wnmmp 组件，请先手动停止该外部组件（可在 Windows 服务 services.msc 中处理），再运行 start.bat。"
 set "MSG3=[提示] 本次跳过 !SVC_NAME! 启动。"
 echo !MSG1!

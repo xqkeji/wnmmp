@@ -18,6 +18,7 @@ REM ---- ANSI status colours (harmless if the console lacks VT support:
 REM ---- C_OK/C_SKIP stay empty and the [OK]/[SKIP] glyph just shows plain).
 set "C_OK=[92m"
 set "C_SKIP=[91m"
+set "C_WARN=[93m"
 set "C_RST=[0m"
 cd /d %~dp0
 set "script_dir_with_slash=%~dp0"
@@ -110,14 +111,14 @@ REM its tail then runs as a new command and prints "'...' is not recognized".
 REM An ECHO line holding only !MSGn! carries no CJK bytes, so it is never cut.
 REM Keep the remarks in front of each label 100% ASCII.
 :stop_msg_self
-set "MSG1=%C_SKIP%[×] [警告] 端口 !PORT! 仍被 wnmmp 自身组件 !PC_IMG! 占用（可能服务配置了自动重启），请检查。%C_RST%"
+set "MSG1=%C_WARN%[警告] 端口 !PORT! 仍被 wnmmp 自身组件 !PC_IMG! 占用（可能服务配置了自动重启），请检查。%C_RST%"
 echo !MSG1!
 set "EXT_OCC=1"
 goto :eof
 
 REM Args: none. Reports an external port owner; never stops other services.
 :stop_msg_ext
-set "MSG1=%C_SKIP%[×] [警告] 端口 !PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）%C_RST%"
+set "MSG1=%C_WARN%[警告] 端口 !PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）%C_RST%"
 set "MSG2=[提示] 该进程/服务非 wnmmp 组件，停止脚本不会自动处理，请手动停止该外部组件后再重试 stop.bat。"
 echo !MSG1!
 echo !MSG2!
