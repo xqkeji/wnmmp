@@ -88,9 +88,18 @@ pause >nul
 exit
 
 REM ===================== helper :start_svc =====================
-REM Args: %1=进程名  %2=显示名  %3=启动命令行  %4=端口
-REM 启动前检测端口：被自身组件占用->停掉（服务/进程）后复查再启动；
-REM 被外部组件占用->提示手动停止并跳过该组件启动（保守策略，不擅自停外部服务）。
+REM Args: 1=process image  2=display name  3=start command line  4=port
+REM
+REM Before starting, the port is checked: when a wnmmp component holds it
+REM that component is stopped (service first, then process) and the port is
+REM rechecked. When an external component holds it, the component is only
+REM reported and its start is skipped - external services are never stopped.
+REM
+REM NOTE: these lines must stay 100% ASCII. cmd.exe locates a CALL target
+REM label by byte offset inside the batch file, and in a UTF-8 file that
+REM contains Chinese text that offset can land a few lines ABOVE the
+REM label. Execution then falls through whatever sits in front of the
+REM label, so every line here must be a harmless ASCII remark.
 :start_svc
 set "SVC_PROC=%~1"
 set "SVC_NAME=%~2"

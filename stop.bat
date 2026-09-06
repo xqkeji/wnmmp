@@ -43,8 +43,18 @@ pause >nul
 exit /b
 
 REM ===================== helper :stop_one =====================
-REM 参数: 进程名  服务名  端口
-REM 已知组件先停服务（若存在）再结束进程；端口复查若被外部组件占用则仅提示，不自动处理。
+REM Args: 1=process image  2=service name  3=port
+REM
+REM Known wnmmp components are stopped in two steps: stop the Windows
+REM service when it exists, then kill any remaining process. If the port
+REM is still held afterwards, the owner is reported and EXT_OCC is set.
+REM An external owner is only reported, never stopped automatically.
+REM
+REM NOTE: these lines must stay 100% ASCII. cmd.exe locates a CALL target
+REM label by byte offset inside the batch file, and in a UTF-8 file that
+REM contains Chinese text that offset can land a few lines ABOVE the
+REM label. Execution then falls through whatever sits in front of the
+REM label, so every line here must be a harmless ASCII remark.
 :stop_one
 set "P=%~1"
 set "SVC=%~2"
