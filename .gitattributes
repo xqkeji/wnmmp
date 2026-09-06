@@ -4,6 +4,8 @@
 # 配合磁盘上已是 CRLF 的文件，保证仓库 blob、clone、archive 全部为 CRLF。
 *.bat -text
 *.cmd -text
+# 开发辅助脚本（如 tools/check-bat.py）同样锁死 CRLF，保持仓库统一约定。
+*.py -text
 
 # 配置文件同理，且同样致命：etc\php\php.ini 若以 LF 交付（下载归档 zip 直接取
 # blob，不做 autocrlf 转换），Windows 的 findstr 就认不出"行边界"——整份文件会被
