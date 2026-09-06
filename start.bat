@@ -128,9 +128,9 @@ if "!PC_BUSY!"=="1" (
 		)
 		echo [%SVC_NAME%] 端口 %SVC_PORT% 已释放，正在启动...
 	) else (
-		echo [!] !SVC_NAME! 端口 !SVC_PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）
-		echo [!!] 该进程/服务非 wnmmp 组件，请先手动停止该外部组件（可在 Windows 服务 services.msc 中处理），再运行 start.bat。
-		echo [!!] 本次跳过 %SVC_NAME% 启动。
+		echo [警告] !SVC_NAME! 端口 !SVC_PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）
+		echo [提示] 该进程/服务非 wnmmp 组件，请先手动停止该外部组件（可在 Windows 服务 services.msc 中处理），再运行 start.bat。
+		echo [提示] 本次跳过 %SVC_NAME% 启动。
 		goto :start_svc_done
 	)
 ) else (
