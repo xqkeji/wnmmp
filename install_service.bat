@@ -14,13 +14,20 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 setlocal enabledelayedexpansion
+REM ---- ANSI status colours (harmless if the console lacks VT support):
+REM ---- C_OK=green(success) C_SKIP=red(skip/error) C_WARN=yellow(warning) C_RST=reset
+set "C_OK=[92m"
+set "C_SKIP=[91m"
+set "C_WARN=[93m"
+set "C_RST=[0m"
 cd /d %~dp0
 
 REM ===================== 管理员权限检查 =====================
 net session >nul 2>&1
 if %errorlevel% neq 0 (
 	echo.
-	echo "[警告] 安装/注册 Windows 服务需要管理员权限！"
+	set "MSG1=%C_WARN%[警告] 安装/注册 Windows 服务需要管理员权限！%C_RST%"
+	echo !MSG1!
 	echo "请右键单击 install_service.bat，选择以管理员身份运行。"
 	echo.
 	set "MSG1=按任意键关闭本窗口..."
@@ -52,7 +59,7 @@ if not exist "%HOME_DIR%\php\php-cgi.exe" set /a "PC_MISS+=1"
 if !PC_MISS! equ 4 (
 	echo.
 	echo **************************************************************
-	set "MSG1=* [错误] 当前目录不是有效的 wnmmp 安装目录！"
+	set "MSG1=* %C_SKIP%[错误] 当前目录不是有效的 wnmmp 安装目录！%C_RST%"
 	set "MSG2=* 四个组件程序 nginx / mongod / mysqld / php-cgi 均未找到，"
 	set "MSG3=* 说明组件尚未下载，或你运行的是源码目录而不是安装目录。"
 	set "MSG4=* 当前目录：%HOME_DIR%"
@@ -75,7 +82,8 @@ set "NSSM_PATH=%HOME_DIR%\bin\nssm.exe"
 if exist !INSTALL_FILE! (
 
 	if not exist "%NSSM_PATH%" (
-		echo "未找到 nssm.exe"
+		set "MSG1=%C_SKIP%[错误] 未找到 nssm.exe%C_RST%"
+		echo !MSG1!
 		set "MSG1=按任意键关闭本窗口..."
 		echo !MSG1!
 		pause >nul
@@ -89,10 +97,10 @@ if exist !INSTALL_FILE! (
 	for %%K in (nginx mongodb mysql php-cgi) do (
 		findstr /x /i /c:"%%K" "%SKIP_FILE%" >nul 2>&1
 		if errorlevel 1 (
-			set "MSG1=- %%K  √ 将安装"
+			set "MSG1=- %%K  将安装"
 			echo !MSG1!
 		) else (
-			set "MSG1=- %%K  × 跳过（已在 tmp\skipped.lst）"
+			set "MSG1=- %%K  跳过（已在 tmp\skipped.lst）"
 			echo !MSG1!
 		)
 	)
@@ -101,7 +109,7 @@ if exist !INSTALL_FILE! (
 	REM ---- nginx ----
 	findstr /x /i /c:"nginx" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		set "MSG1=[skip] nginx：已在跳过清单，不注册服务"
+		set "MSG1=%C_SKIP%[×] [skip] nginx：已在跳过清单，不注册服务%C_RST%"
 		echo !MSG1!
 	) else (
 		call "bin\service-nginx.bat"
@@ -110,7 +118,7 @@ if exist !INSTALL_FILE! (
 	REM ---- mongodb ----
 	findstr /x /i /c:"mongodb" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		set "MSG1=[skip] mongodb：已在跳过清单，不注册服务"
+		set "MSG1=%C_SKIP%[×] [skip] mongodb：已在跳过清单，不注册服务%C_RST%"
 		echo !MSG1!
 	) else (
 		call "bin\service-mongodb.bat"
@@ -119,7 +127,7 @@ if exist !INSTALL_FILE! (
 	REM ---- mysql ----
 	findstr /x /i /c:"mysql" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		set "MSG1=[skip] mysql：已在跳过清单，不注册服务"
+		set "MSG1=%C_SKIP%[×] [skip] mysql：已在跳过清单，不注册服务%C_RST%"
 		echo !MSG1!
 	) else (
 		call "bin\service-mysql.bat"
@@ -128,13 +136,14 @@ if exist !INSTALL_FILE! (
 	REM ---- php-cgi ----
 	findstr /x /i /c:"php-cgi" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		set "MSG1=[skip] php-cgi：已在跳过清单，不注册服务"
+		set "MSG1=%C_SKIP%[×] [skip] php-cgi：已在跳过清单，不注册服务%C_RST%"
 		echo !MSG1!
 	) else (
 		call "bin\service-php-cgi.bat"
 	)
 
-	echo "所有 wnmmp 服务已安装完成。"
+	set "MSG1=%C_OK%[√] 所有 wnmmp 服务已安装完成。%C_RST%"
+	echo !MSG1!
 	echo "可在 Windows 服务面板（services.msc）中查看和管理这些服务。"
 
 	set HOME_DIR=
