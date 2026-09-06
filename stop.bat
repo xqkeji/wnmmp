@@ -14,6 +14,11 @@ REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
 setlocal enabledelayedexpansion
+REM ---- ANSI status colours (harmless if the console lacks VT support:
+REM ---- C_OK/C_SKIP stay empty and the [OK]/[SKIP] glyph just shows plain).
+set "C_OK=[92m"
+set "C_SKIP=[91m"
+set "C_RST=[0m"
 cd /d %~dp0
 set "script_dir_with_slash=%~dp0"
 set "HOME_DIR=%script_dir_with_slash:~0,-1%"
@@ -32,10 +37,10 @@ call :stop_one php-cgi.exe wnmmp-php-cgi 9000
 
 echo.
 if "!EXT_OCC!"=="1" (
-    set "MSG1=[注意] 部分组件停止后端口仍被外部组件占用，或自身服务配置了自动重启。"
+    set "MSG1=%C_SKIP%[×] [注意] 部分组件停止后端口仍被外部组件占用，或自身服务配置了自动重启。%C_RST%"
     set "MSG2=[注意] 这些项需你手动处理：请停止对应外部进程或服务后，重试 stop.bat。"
 ) else (
-    set "MSG1=已完成。所有 wnmmp 组件均已停止。"
+    set "MSG1=%C_OK%[√] 已完成。所有 wnmmp 组件均已停止。%C_RST%"
     set "MSG2="
 )
 echo !MSG1!
@@ -72,9 +77,9 @@ taskkill /f /im "%P%" >nul 2>&1
 REM The message body is stored first: cmd counts line boundaries in characters
 REM while CJK takes 3 bytes here, so a raw Chinese ECHO can be cut mid-line.
 if not errorlevel 1 (
-	set "MSG1=[%P%] 进程已停止"
+	set "MSG1=%C_OK%[√] [%P%] 进程已停止%C_RST%"
 ) else (
-	set "MSG1=[%P%] 进程未运行或无需停止"
+	set "MSG1=%C_OK%[√] [%P%] 进程未运行或无需停止%C_RST%"
 )
 echo !MSG1!
 set "PC_BUSY=0" & set "PC_PID=" & set "PC_IMG=" & set "PC_SVC=N/A" & set "PC_OURS=0"
@@ -105,14 +110,14 @@ REM its tail then runs as a new command and prints "'...' is not recognized".
 REM An ECHO line holding only !MSGn! carries no CJK bytes, so it is never cut.
 REM Keep the remarks in front of each label 100% ASCII.
 :stop_msg_self
-set "MSG1=[警告] 端口 !PORT! 仍被 wnmmp 自身组件 !PC_IMG! 占用（可能服务配置了自动重启），请检查。"
+set "MSG1=%C_SKIP%[×] [警告] 端口 !PORT! 仍被 wnmmp 自身组件 !PC_IMG! 占用（可能服务配置了自动重启），请检查。%C_RST%"
 echo !MSG1!
 set "EXT_OCC=1"
 goto :eof
 
 REM Args: none. Reports an external port owner; never stops other services.
 :stop_msg_ext
-set "MSG1=[警告] 端口 !PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）"
+set "MSG1=%C_SKIP%[×] [警告] 端口 !PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）%C_RST%"
 set "MSG2=[提示] 该进程/服务非 wnmmp 组件，停止脚本不会自动处理，请手动停止该外部组件后再重试 stop.bat。"
 echo !MSG1!
 echo !MSG2!
