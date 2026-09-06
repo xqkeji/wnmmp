@@ -23,7 +23,8 @@ if %errorlevel% neq 0 (
 	echo "[警告] 安装/注册 Windows 服务需要管理员权限！"
 	echo "请右键单击 install_service.bat，选择以管理员身份运行。"
 	echo.
-	echo 按任意键关闭本窗口...
+	set "MSG1=按任意键关闭本窗口..."
+	echo !MSG1!
 	pause >nul
 	exit /b 1
 )
@@ -51,12 +52,18 @@ if not exist "%HOME_DIR%\php\php-cgi.exe" set /a "PC_MISS+=1"
 if !PC_MISS! equ 4 (
 	echo.
 	echo **************************************************************
-	echo * [错误] 当前目录不是有效的 wnmmp 安装目录！
-	echo * 四个组件程序 nginx / mongod / mysqld / php-cgi 均未找到，
-	echo * 说明组件尚未下载，或你运行的是源码目录而不是安装目录。
-	echo * 当前目录：%HOME_DIR%
-	echo * 请先在目标目录运行 install.bat 完成安装，或切换到已安装的目录
-	echo * 后，再右键以管理员身份运行本脚本。
+	set "MSG1=* [错误] 当前目录不是有效的 wnmmp 安装目录！"
+	set "MSG2=* 四个组件程序 nginx / mongod / mysqld / php-cgi 均未找到，"
+	set "MSG3=* 说明组件尚未下载，或你运行的是源码目录而不是安装目录。"
+	set "MSG4=* 当前目录：%HOME_DIR%"
+	set "MSG5=* 请先在目标目录运行 install.bat 完成安装，或切换到已安装的目录"
+	set "MSG6=* 后，再右键以管理员身份运行本脚本。"
+	echo !MSG1!
+	echo !MSG2!
+	echo !MSG3!
+	echo !MSG4!
+	echo !MSG5!
+	echo !MSG6!
 	echo **************************************************************
 	echo.
 	pause
@@ -69,20 +76,24 @@ if exist !INSTALL_FILE! (
 
 	if not exist "%NSSM_PATH%" (
 		echo "未找到 nssm.exe"
-		echo 按任意键关闭本窗口...
+		set "MSG1=按任意键关闭本窗口..."
+		echo !MSG1!
 		pause >nul
 		exit /b 1
 	)
 
 	REM ---- 汇总将要注册的组件（依据 skipped.lst）----
 	echo ==============================================================
-	echo  将要安装/注册以下 WNMMP 服务（已记录在跳过清单中的组件不会被处理）：
+	set "MSG1=将要安装/注册以下 WNMMP 服务（已记录在跳过清单中的组件不会被处理）："
+	echo !MSG1!
 	for %%K in (nginx mongodb mysql php-cgi) do (
 		findstr /x /i /c:"%%K" "%SKIP_FILE%" >nul 2>&1
 		if errorlevel 1 (
-			echo   - %%K  √ 将安装
+			set "MSG1=- %%K  √ 将安装"
+			echo !MSG1!
 		) else (
-			echo   - %%K  × 跳过（已在 tmp\skipped.lst）
+			set "MSG1=- %%K  × 跳过（已在 tmp\skipped.lst）"
+			echo !MSG1!
 		)
 	)
 	echo ==============================================================
@@ -90,7 +101,8 @@ if exist !INSTALL_FILE! (
 	REM ---- nginx ----
 	findstr /x /i /c:"nginx" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		echo [skip] nginx：已在跳过清单，不注册服务
+		set "MSG1=[skip] nginx：已在跳过清单，不注册服务"
+		echo !MSG1!
 	) else (
 		call "bin\service-nginx.bat"
 	)
@@ -98,7 +110,8 @@ if exist !INSTALL_FILE! (
 	REM ---- mongodb ----
 	findstr /x /i /c:"mongodb" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		echo [skip] mongodb：已在跳过清单，不注册服务
+		set "MSG1=[skip] mongodb：已在跳过清单，不注册服务"
+		echo !MSG1!
 	) else (
 		call "bin\service-mongodb.bat"
 	)
@@ -106,7 +119,8 @@ if exist !INSTALL_FILE! (
 	REM ---- mysql ----
 	findstr /x /i /c:"mysql" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		echo [skip] mysql：已在跳过清单，不注册服务
+		set "MSG1=[skip] mysql：已在跳过清单，不注册服务"
+		echo !MSG1!
 	) else (
 		call "bin\service-mysql.bat"
 	)
@@ -114,7 +128,8 @@ if exist !INSTALL_FILE! (
 	REM ---- php-cgi ----
 	findstr /x /i /c:"php-cgi" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		echo [skip] php-cgi：已在跳过清单，不注册服务
+		set "MSG1=[skip] php-cgi：已在跳过清单，不注册服务"
+		echo !MSG1!
 	) else (
 		call "bin\service-php-cgi.bat"
 	)
@@ -124,12 +139,14 @@ if exist !INSTALL_FILE! (
 
 	set HOME_DIR=
 	set PATH=
-	echo 按任意键关闭本窗口...
+	set "MSG1=按任意键关闭本窗口..."
+	echo !MSG1!
 	pause >nul
 
 ) else (
     echo "请先运行 install.bat！"
-	echo 按任意键关闭本窗口...
+	set "MSG1=按任意键关闭本窗口..."
+	echo !MSG1!
 	pause >nul
 )
 

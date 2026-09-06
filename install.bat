@@ -52,7 +52,8 @@ tasklist | findstr /i nginx.exe && taskkill /f /im nginx.exe
 REM ============== PORT PRE-CHECK (detect already-running / installed services) ==============
 echo === 端口占用预检（检测 nginx/mysql/mongodb/php-cgi 是否已被占用）===
 if "%WNMMP_SKIP_PORTCHECK%"=="1" (
-	echo [port] 已设置 WNMMP_SKIP_PORTCHECK=1，跳过端口预检
+	set "MSG1=[port] 已设置 WNMMP_SKIP_PORTCHECK=1，跳过端口预检"
+	echo !MSG1!
 	goto :portcheck_done
 )
 call :portcheck nginx 80 "Nginx" SKIP_NGINX
@@ -81,10 +82,12 @@ if exist "%ERR_FILE%" (
 	if !ERR_SIZE! gtr 0 (
 		echo.
 		echo **************************************************************
-		echo * [警告] 以下组件在安装过程中下载/安装失败：
+		set "MSG1=* [警告] 以下组件在安装过程中下载/安装失败："
+		echo !MSG1!
 		echo **************************************************************
 		type "%ERR_FILE%"
-		echo * 可重新运行 install.bat 进行断点续传重试。
+		set "MSG1=* 可重新运行 install.bat 进行断点续传重试。"
+		echo !MSG1!
 		echo.
 	)
 )
@@ -93,12 +96,17 @@ REM ---- skipped-install summary ----
 if exist "%SKIP_FILE%" (
 	echo.
 	echo ==============================================================
-	echo * [跳过安装记录] 本次以下组件未安装（端口被占用，用户选择跳过）：
+	set "MSG1=* [跳过安装记录] 本次以下组件未安装（端口被占用，用户选择跳过）："
+	echo !MSG1!
 	for /f "usebackq tokens=*" %%L in ("%SKIP_FILE%") do echo *   - %%L
-	echo * 说明：nginx / mysql / mongodb 跳过 = 不下载、不初始化、不注册服务；
-	echo *       php-cgi 跳过 = 不注册 FastCGI 服务（PHP 运行时仍正常安装）。
-	echo * 如需补装被跳过的组件：释放对应端口后，删除 tmp\skipped.lst 中对应行，
-	echo * 再重新运行 install.bat 即可。
+	set "MSG1=* 说明：nginx / mysql / mongodb 跳过 = 不下载、不初始化、不注册服务；"
+	set "MSG2=*       php-cgi 跳过 = 不注册 FastCGI 服务（PHP 运行时仍正常安装）。"
+	set "MSG3=* 如需补装被跳过的组件：释放对应端口后，删除 tmp\skipped.lst 中对应行，"
+	set "MSG4=* 再重新运行 install.bat 即可。"
+	echo !MSG1!
+	echo !MSG2!
+	echo !MSG3!
+	echo !MSG4!
 	echo ==============================================================
 )
 
@@ -124,7 +132,8 @@ REM honor a previously recorded skip (do not re-prompt on re-run)
 if exist "%SKIP_FILE%" (
 	findstr /x /i /c:"%PC_KEY%" "%SKIP_FILE%" >nul 2>&1
 	if not errorlevel 1 (
-		echo [skip] %PC_NAME% 已在跳过清单（tmp\skipped.lst），本次不安装/不检测
+		set "MSG1=[skip] %PC_NAME% 已在跳过清单（tmp\skipped.lst），本次不安装/不检测"
+		echo !MSG1!
 		set "%PC_SKIPVAR%=1"
 		goto :eof
 	)
@@ -137,7 +146,8 @@ for /f "tokens=*" %%L in ('netstat -ano 2^>nul ^| findstr /c:":%PC_PORT% " ^| fi
 	for /f "tokens=5" %%P in ("%%L") do set "PC_PID=%%P"
 )
 if "%PC_BUSY%"=="0" (
-	echo [port] %PC_NAME% 端口 %PC_PORT% 空闲，可继续安装
+	set "MSG1=[port] %PC_NAME% 端口 %PC_PORT% 空闲，可继续安装"
+	echo !MSG1!
 	goto :eof
 )
 REM ---- port busy: reverse-lookup owner image + service; decide if it is ours ----
@@ -161,31 +171,37 @@ if /i "!PC_IMG!"=="mysqld.exe" set "PC_OURS=1"
 if /i "!PC_IMG!"=="mongod.exe" set "PC_OURS=1"
 if /i "!PC_IMG!"=="php-cgi.exe" set "PC_OURS=1"
 if "!PC_OURS!"=="1" (
-	echo [port] !PC_NAME! 端口被 wnmmp 自身组件占用（!PC_IMG! PID=!PC_PID!, 服务=!PC_SVC!）
+	set "MSG1=[port] !PC_NAME! 端口被 wnmmp 自身组件占用（!PC_IMG! PID=!PC_PID!, 服务=!PC_SVC!）"
+	echo !MSG1!
 	if "!PC_ADMIN!"=="1" (
 		if not "!PC_SVC!"=="N/A" (
 			for /f "tokens=1 delims=," %%s in ("!PC_SVC!") do (
-				echo [port] 尝试停止服务 %%s ...
+				set "MSG1=[port] 尝试停止服务 %%s ..."
+				echo !MSG1!
 				net stop "%%s" /y >nul 2>&1
 			)
 		)
 		taskkill /f /pid !PC_PID! >nul 2>&1
 	) else (
-		echo [port] 非管理员权限，尝试结束进程 PID=!PC_PID! ...
+		set "MSG1=[port] 非管理员权限，尝试结束进程 PID=!PC_PID! ..."
+		echo !MSG1!
 		taskkill /f /pid !PC_PID! >nul 2>&1
 	)
 	REM re-check whether the port is now free
 	set "PC_BUSY=0"
 	for /f "tokens=*" %%L in ('netstat -ano 2^>nul ^| findstr /c:":%PC_PORT% " ^| findstr "LISTENING"') do set "PC_BUSY=1"
 	if "!PC_BUSY!"=="0" (
-		echo [port] !PC_NAME! 端口 !PC_PORT! 已释放，继续安装
+		set "MSG1=[port] !PC_NAME! 端口 !PC_PORT! 已释放，继续安装"
+		echo !MSG1!
 		goto :eof
 	)
-	echo [port] 自动释放失败（服务可能设了自动重启或权限不足），转为手动处理。
+	set "MSG1=[port] 自动释放失败（服务可能设了自动重启或权限不足），转为手动处理。"
+	echo !MSG1!
 )
 echo.
 echo **************************************************************
-echo * [警告] !PC_NAME! 的端口 !PC_PORT! 已被占用！
+set "MSG1=* [警告] !PC_NAME! 的端口 !PC_PORT! 已被占用！"
+echo !MSG1!
 REM PC_IMG/PC_PID/PC_SVC/PC_OURS all derive from tasklist or decisions and are
 REM NOT under our control. Interpolating them with %var% would expand at PARSE
 REM time, so any quote / paren / ampersand in the value would break the block
@@ -193,25 +209,32 @@ REM and make cmd treat the tail of a line as a new command. !var! expands at
 REM RUN time, after parsing, so it cannot do that. The whole port-busy section
 REM therefore uses !var! everywhere a tasklist-derived/decision value is echoed
 REM or branched on -- including the ( ... ) block at :portcheck and this block.
-echo * 占用者：!PC_IMG!，PID=!PC_PID!，服务=!PC_SVC!
+set "MSG1=* 占用者：!PC_IMG!，PID=!PC_PID!，服务=!PC_SVC!"
+echo !MSG1!
 if "!PC_OURS!"=="1" (
-	echo * 属于 wnmmp 自身组件，可安全停止。
+	set "MSG1=* 属于 wnmmp 自身组件，可安全停止。"
+	echo !MSG1!
 ) else (
-	echo * 非 wnmmp 组件，安装程序不会自动停止它，以免误停你依赖的关键服务，例如 IIS、SQL Server 等。
+	set "MSG1=* 非 wnmmp 组件，安装程序不会自动停止它，以免误停你依赖的关键服务，例如 IIS、SQL Server 等。"
+	echo !MSG1!
 )
-echo * 建议：在 Windows 服务 services.msc 中找到上述服务/进程并停止，再运行 install.bat。
+set "MSG1=* 建议：在 Windows 服务 services.msc 中找到上述服务/进程并停止，再运行 install.bat。"
+echo !MSG1!
 echo **************************************************************
 choice /C AS /N /M "请选择 [A] 中止安装稍后手动处理  或  [S] 跳过 !PC_NAME! 安装："
 if errorlevel 2 (
 	echo %DATE% %TIME% [skip] !PC_NAME! 安装被用户跳过（端口 !PC_PORT! 被占用） >> "%TMP_DIR%\install.progress.log"
 	>>"%SKIP_FILE%" echo %PC_KEY%
-	echo [skip] 已记录：跳过 %PC_NAME% 安装（详见 tmp\skipped.lst）
+	set "MSG1=[skip] 已记录：跳过 %PC_NAME% 安装（详见 tmp\skipped.lst）"
+	echo !MSG1!
 	set "%PC_SKIPVAR%=1"
 	goto :eof
 )
-echo [abort] 安装已中止。请处理端口 %PC_PORT% 占用后，重新运行 install.bat。
+set "MSG1=[abort] 安装已中止。请处理端口 %PC_PORT% 占用后，重新运行 install.bat。"
+echo !MSG1!
 echo %DATE% %TIME% [port-check] ABORTED: !PC_NAME! port !PC_PORT! occupied >> "%TMP_DIR%\install.progress.log"
-echo 安装已中止。按任意键关闭本窗口...
+set "MSG1=安装已中止。按任意键关闭本窗口..."
+echo !MSG1!
 pause >nul
 exit
 goto :eof

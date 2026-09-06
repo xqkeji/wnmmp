@@ -69,7 +69,14 @@ if not errorlevel 1 (
 	net stop "%SVC%" /y >nul 2>&1
 )
 taskkill /f /im "%P%" >nul 2>&1
-if not errorlevel 1 ( echo [%P%] 进程已停止 ) else ( echo [%P%] 进程未运行或无需停止 )
+REM The message body is stored first: cmd counts line boundaries in characters
+REM while CJK takes 3 bytes here, so a raw Chinese ECHO can be cut mid-line.
+if not errorlevel 1 (
+	set "MSG1=[%P%] 进程已停止"
+) else (
+	set "MSG1=[%P%] 进程未运行或无需停止"
+)
+echo !MSG1!
 set "PC_BUSY=0" & set "PC_PID=" & set "PC_IMG=" & set "PC_SVC=N/A" & set "PC_OURS=0"
 call bin\port-util.bat :port_owner %PORT% PC_BUSY PC_PID PC_IMG PC_SVC
 if "!PC_BUSY!"=="1" (
@@ -85,8 +92,6 @@ if "!PC_BUSY!"=="1" (
 		set "EXT_OCC=1"
 	)
 )
-echo !MSG1!
-if defined MSG2 echo !MSG2!
 goto :eof
 
 REM ===================== messages for :stop_one =====================

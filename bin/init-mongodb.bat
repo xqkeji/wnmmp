@@ -18,7 +18,8 @@ if not exist "%DATA_DIR%\mongodb" (
 	mkdir "%DATA_DIR%\mongodb"
 )
 if exist "%DATA_DIR%\mongodb\*.wt" (
-	echo [init] MongoDB 数据目录已存在（%DATA_DIR%\mongodb），之前已初始化过，跳过初始化。
+	set "MSG1=[init] MongoDB 数据目录已存在（%DATA_DIR%\mongodb），之前已初始化过，跳过初始化。"
+	echo !MSG1!
 	goto :eof
 )
 echo [init] 开始初始化 MongoDB（创建管理员账号，约需 10 秒，请稍候）...
@@ -27,8 +28,10 @@ timeout /t 10 /nobreak >nul
 "%HOME_DIR%\mongodb\bin\mongosh.exe" --port 27017 "%CONFIG_DIR%\mongodb\create_admin.js" >nul 2>nul
 tasklist | findstr /i mongod.exe && taskkill /f /im mongod.exe
 timeout /t 3 /nobreak >nul
-echo [init] MongoDB 初始化完成！
-echo [init] 默认账号：root    默认密码：xqkeji.cn   （监听端口 27017）
+set "MSG1=[init] MongoDB 初始化完成！"
+set "MSG2=[init] 默认账号：root    默认密码：xqkeji.cn   （监听端口 27017）"
+echo !MSG1!
+echo !MSG2!
 
 
 

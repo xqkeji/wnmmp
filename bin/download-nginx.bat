@@ -32,9 +32,11 @@ mkdir "%NGINX_DIR%"
 wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O %TMP_DIR%\download\nginx.zip %NGINX_DOWNLOAD_URL%
 if !errorlevel! neq 0 (
 	echo.
-	echo [ERROR] nginx 下载失败！安装未完成。
+	set "MSG1=[ERROR] nginx 下载失败！安装未完成。"
+	echo !MSG1!
 	echo [ERROR] URL: %NGINX_DOWNLOAD_URL%
-	echo [ERROR] 请检查网络后重新运行 install.bat（支持断点续传）。
+	set "MSG1=[ERROR] 请检查网络后重新运行 install.bat（支持断点续传）。"
+	echo !MSG1!
 	echo %DATE% %TIME% [nginx] download FAILED >> "%TMP_DIR%\install.errors.log"
 	rd "%NGINX_DIR%" 2>nul
 	pause
@@ -47,8 +49,10 @@ if !errorlevel! neq 0 (
 	unzip -o %TMP_DIR%\download\nginx.zip -d %TMP_DIR%\download
 	if !errorlevel! neq 0 (
 		echo.
-		echo [ERROR] nginx 解压失败！安装未完成。
-		echo [ERROR] 可能是 zip 损坏，已删除损坏包，请重新运行 install.bat 重试。
+		set "MSG1=[ERROR] nginx 解压失败！安装未完成。"
+		set "MSG2=[ERROR] 可能是 zip 损坏，已删除损坏包，请重新运行 install.bat 重试。"
+		echo !MSG1!
+		echo !MSG2!
 		echo %DATE% %TIME% [nginx] extract FAILED >> "%TMP_DIR%\install.errors.log"
 		rd "%NGINX_DIR%" 2>nul
 		pause

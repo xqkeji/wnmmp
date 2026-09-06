@@ -85,9 +85,11 @@ REM ===================== helper :download_core =====================
 wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O "%TMP_DIR%\download\php.zip" %PHP_DOWNLOAD_URL%
 if not "!errorlevel!"=="0" (
 	echo.
-	echo [ERROR] PHP 核心下载失败！安装未完成。
+	set "MSG1=[ERROR] PHP 核心下载失败！安装未完成。"
+	echo !MSG1!
 	echo [ERROR] URL: %PHP_DOWNLOAD_URL%
-	echo [ERROR] 请检查网络后重新运行 install.bat（已下载部分支持断点续传）。
+	set "MSG1=[ERROR] 请检查网络后重新运行 install.bat（已下载部分支持断点续传）。"
+	echo !MSG1!
 	echo %DATE% %TIME% [php] CORE download FAILED >> "%TMP_DIR%\install.errors.log"
 	pause
 	exit
@@ -99,8 +101,10 @@ if not "!errorlevel!"=="0" (
 	unzip -o "%TMP_DIR%\download\php.zip" -d "%TMP_DIR%\download\php"
 	if not "!errorlevel!"=="0" (
 		echo.
-		echo [ERROR] PHP 核心解压失败！安装未完成。
-		echo [ERROR] 可能是 zip 损坏，已删除损坏包，请重新运行 install.bat 重试。
+		set "MSG1=[ERROR] PHP 核心解压失败！安装未完成。"
+		set "MSG2=[ERROR] 可能是 zip 损坏，已删除损坏包，请重新运行 install.bat 重试。"
+		echo !MSG1!
+		echo !MSG2!
 		echo %DATE% %TIME% [php] CORE extract FAILED >> "%TMP_DIR%\install.errors.log"
 		pause
 		exit
@@ -145,12 +149,22 @@ if exist "%PHP_EXT_DIR%\%FB_DLL%" (
 	goto :eof
 )
 :pecl_dllmiss
-echo [ERROR] %FB_EXT% 解压后未找到 %FB_DLL%，该扩展未安装。
+set "MSG1=[ERROR] %FB_EXT% 解压后未找到 %FB_DLL%，该扩展未安装。"
+echo !MSG1!
 echo %DATE% %TIME% [php] %FB_EXT% FAILED (dll missing in zip) >> "%TMP_DIR%\install.errors.log"
 goto pecl_disable
 :pecl_failed
-echo [ERROR] %FB_EXT% 下载失败（php %PHP_MM% / ext %FB_VER%）！该扩展未安装。
+set "MSG1=[ERROR] %FB_EXT% 下载失败（php %PHP_MM% / ext %FB_VER%）！该扩展未安装。"
+echo !MSG1!
 echo %DATE% %TIME% [php] %FB_EXT% FAILED (PECL download) >> "%TMP_DIR%\install.errors.log"
+REM ---- keep the lines above this label 100% ASCII: cmd.exe locates a
+REM ---- CALL/GOTO target label by byte offset inside a UTF-8 batch file,
+REM ---- and the Chinese text elsewhere in this file makes that offset
+REM ---- drift, so execution can land a few lines ABOVE the label. Whatever
+REM ---- sits there then runs, so it has to stay a harmless ASCII remark.
+REM ----
+REM ----
+REM ----
 :pecl_disable
 call :disable_ext %FB_EXT%
 goto :eof
@@ -176,11 +190,22 @@ if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
 if "%CFG_xqkeji%"=="" goto xqkeji_nourl
 set "XQ_TAG=%CFG_xqkeji%"
 set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%XQ_TAG%.zip"
-echo [php] xqkeji 标签 = %XQ_TAG% ^(wnmmp.ini, php %PHP_MM%^)
+set "MSG1=[php] xqkeji 标签 = %XQ_TAG% (wnmmp.ini, php %PHP_MM%)"
+echo !MSG1!
 echo %XQ_TAG%| findstr /i /c:"-php%PHP_MM%" >nul
 if not errorlevel 1 goto xqkeji_tag_ok
-echo [WARN] xqkeji 标签 %XQ_TAG% 与已安装 PHP %PHP_MM% 不匹配
-echo [WARN] 请检查 wnmmp.ini 里 xqkeji 与 php 两项是否配套
+set "MSG1=[WARN] xqkeji 标签 %XQ_TAG% 与已安装 PHP %PHP_MM% 不匹配"
+set "MSG2=[WARN] 请检查 wnmmp.ini 里 xqkeji 与 php 两项是否配套"
+echo !MSG1!
+echo !MSG2!
+REM ---- keep the lines above this label 100% ASCII: cmd.exe locates a
+REM ---- CALL/GOTO target label by byte offset inside a UTF-8 batch file,
+REM ---- and the Chinese text elsewhere in this file makes that offset
+REM ---- drift, so execution can land a few lines ABOVE the label. Whatever
+REM ---- sits there then runs, so it has to stay a harmless ASCII remark.
+REM ----
+REM ----
+REM ----
 :xqkeji_tag_ok
 echo [php] downloading xqkeji ^(gitee^)...
 wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O "%TMP_DIR%\download\php-xqkeji.zip" "%PHP_XQKEJI_DOWNLOAD_URL%"
@@ -204,16 +229,27 @@ if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
 	goto :eof
 )
 :xqkeji_dllmiss
-echo [ERROR] php_xqkeji 解压后未找到 php_xqkeji.dll，该扩展未安装。
+set "MSG1=[ERROR] php_xqkeji 解压后未找到 php_xqkeji.dll，该扩展未安装。"
+echo !MSG1!
 echo %DATE% %TIME% [php] xqkeji FAILED (dll missing) >> "%TMP_DIR%\install.errors.log"
 goto xqkeji_disable
 :xqkeji_failed
-echo [ERROR] php_xqkeji 下载失败！该扩展未安装。
+set "MSG1=[ERROR] php_xqkeji 下载失败！该扩展未安装。"
+echo !MSG1!
 echo %DATE% %TIME% [php] xqkeji FAILED (download) >> "%TMP_DIR%\install.errors.log"
 goto xqkeji_disable
 :xqkeji_nourl
-echo [ERROR] php_xqkeji 未配置下载地址，跳过。
+set "MSG1=[ERROR] php_xqkeji 未配置下载地址，跳过。"
+echo !MSG1!
 echo %DATE% %TIME% [php] xqkeji SKIPPED (no url) >> "%TMP_DIR%\install.errors.log"
+REM ---- keep the lines above this label 100% ASCII: cmd.exe locates a
+REM ---- CALL/GOTO target label by byte offset inside a UTF-8 batch file,
+REM ---- and the Chinese text elsewhere in this file makes that offset
+REM ---- drift, so execution can land a few lines ABOVE the label. Whatever
+REM ---- sits there then runs, so it has to stay a harmless ASCII remark.
+REM ----
+REM ----
+REM ----
 :xqkeji_disable
 call :disable_ext xqkeji
 goto :eof
@@ -259,9 +295,11 @@ if "%EN_KIND%"=="zend" (
 findstr /x /c:"%EN_LINE%" "%INI%" >nul 2>&1
 if errorlevel 1 (
 	echo %EN_LINE%>>"%INI%"
-	echo [php] 已启用扩展 %EN_NAME% ^(%EN_KIND%^)
+	set "MSG1=[php] 已启用扩展 %EN_NAME% (%EN_KIND%)"
+	echo !MSG1!
 	echo %DATE% %TIME% [php] %EN_NAME% enabled in php.ini >> "%TMP_DIR%\install.progress.log"
 ) else (
-	echo [php] %EN_NAME% 启用行已存在，skip
+	set "MSG1=[php] %EN_NAME% 启用行已存在，skip"
+	echo !MSG1!
 )
 goto :eof

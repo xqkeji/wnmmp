@@ -37,15 +37,26 @@ set "PIE_BAT=%PIE_DIR%\pie.bat"
 
 REM PIE itself needs php to run; if the core is somehow missing, skip PIE.
 if not exist "%HOME_DIR%\php\php.exe" (
-	echo [WARN] php.exe 未找到，PIE 不可用，扩展将走 PECL 直下。
+	set "MSG1=[WARN] php.exe 未找到，PIE 不可用，扩展将走 PECL 直下。"
+	echo !MSG1!
 	goto :pie_done
 )
 
 if exist "%PIE_PHAR%" (
-	echo [pie] 检测到 pie.phar（请确保已自行放入 bin\composer），已就绪。
+	set "MSG1=[pie] 检测到 pie.phar（请确保已自行放入 bin\composer），已就绪。"
+	echo !MSG1!
 	set "PIE_BIN=%PIE_BAT%"
 ) else (
-	echo [WARN] 未找到 bin\composer\pie.phar，请自行下载并放入该目录；扩展将走 PECL 直下。
+	set "MSG1=[WARN] 未找到 bin\composer\pie.phar，请自行下载并放入该目录；扩展将走 PECL 直下。"
+	echo !MSG1!
 )
 
+REM ---- keep the lines above this label 100% ASCII: cmd.exe locates a
+REM ---- CALL/GOTO target label by byte offset inside a UTF-8 batch file,
+REM ---- and the Chinese text elsewhere in this file makes that offset
+REM ---- drift, so execution can land a few lines ABOVE the label. Whatever
+REM ---- sits there then runs, so it has to stay a harmless ASCII remark.
+REM ----
+REM ----
+REM ----
 :pie_done
