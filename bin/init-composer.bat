@@ -32,8 +32,10 @@ REM （GitHub 等通道在国内不稳定）。这里只做「就位检测」+ �
 set "COMPOSER_PHAR=%COMPOSER_DIR%\composer.phar"
 if exist "%COMPOSER_PHAR%" (
 	call "%COMPOSER_DIR%\composer.bat" config --global use-parent-dir true >nul 2>&1
-	echo [composer] 检测到 composer.phar（请确保已自行放入 bin\composer），已就绪。
+	set "MSG1=[composer] 检测到 composer.phar（请确保已自行放入 bin\composer），已就绪。"
+	echo !MSG1!
 ) else (
-	echo [WARN] 未找到 bin\composer\composer.phar，请自行下载并放入该目录，否则 composer 命令不可用。
+	set "MSG1=[WARN] 未找到 bin\composer\composer.phar，请自行下载并放入该目录，否则 composer 命令不可用。"
+	echo !MSG1!
 )
 

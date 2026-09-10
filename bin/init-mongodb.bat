@@ -13,7 +13,9 @@ REM distributed under the License is distributed on an "AS IS" BASIS,
 REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
-echo [init] 正在检查 MongoDB 数据目录是否已初始化 ...
+setlocal enabledelayedexpansion
+set "MSG1=[init] 正在检查 MongoDB 数据目录是否已初始化 ..."
+echo !MSG1!
 if not exist "%DATA_DIR%\mongodb" (
 	mkdir "%DATA_DIR%\mongodb"
 )
@@ -22,7 +24,8 @@ if exist "%DATA_DIR%\mongodb\*.wt" (
 	echo !MSG1!
 	goto :eof
 )
-echo [init] 开始初始化 MongoDB（创建管理员账号，约需 10 秒，请稍候）...
+set "MSG1=[init] 开始初始化 MongoDB（创建管理员账号，约需 10 秒，请稍候）..."
+echo !MSG1!
 start "MongoDB Server" /B "%HOME_DIR%\mongodb\bin\mongod.exe" --config %CONFIG_DIR%\mongodb\mongo.conf --dbpath %DATA_DIR%\mongodb --logpath %LOGS_DIR%\mongodb\info.log >nul 2>nul
 timeout /t 10 /nobreak >nul
 "%HOME_DIR%\mongodb\bin\mongosh.exe" --port 27017 "%CONFIG_DIR%\mongodb\create_admin.js" >nul 2>nul

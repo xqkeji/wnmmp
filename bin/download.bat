@@ -25,33 +25,41 @@ if not exist "!DOWNLOAD_DIR!" mkdir "!DOWNLOAD_DIR!"
 REM nginx (skip if user chose to skip due to port 80 occupied)
 if not "%SKIP_NGINX%"=="1" (
 	call "download-nginx.bat"
-	echo "nginx 下载完成！"
+	set "MSG1=nginx 下载完成！"
+	echo !MSG1!
 ) else (
-	echo "[skip] nginx 安装已跳过，不下载"
+	set "MSG1=[skip] nginx 安装已跳过，不下载"
+	echo !MSG1!
 )
 
 REM mongodb (skip if user chose to skip due to port 27017 occupied)
 if not "%SKIP_MONGODB%"=="1" (
 	call "download-mongodb.bat"
-	echo "mongodb 下载完成！"
+	set "MSG1=mongodb 下载完成！"
+	echo !MSG1!
 ) else (
-	echo "[skip] mongodb 安装已跳过，不下载"
+	set "MSG1=[skip] mongodb 安装已跳过，不下载"
+	echo !MSG1!
 )
 
 REM mysql (skip if user chose to skip due to port 3306 occupied)
 if not "%SKIP_MYSQL%"=="1" (
 	call "download-mysql.bat"
-	echo "mysql 下载完成！"
+	set "MSG1=mysql 下载完成！"
+	echo !MSG1!
 ) else (
-	echo "[skip] mysql 安装已跳过，不下载"
+	set "MSG1=[skip] mysql 安装已跳过，不下载"
+	echo !MSG1!
 )
 
 REM PHP runtime is ALWAYS required (extensions / composer / PIE),
 REM even when the php-cgi SERVICE is skipped (port 9000 occupied).
 call "download-php.bat"
-echo "php 下载完成！"
+set "MSG1=php 下载完成！"
+echo !MSG1!
 
 rd /s /q "!DOWNLOAD_DIR!"
-echo "下载文件清理完成！"
+set "MSG1=下载文件清理完成！"
+echo !MSG1!
 
 

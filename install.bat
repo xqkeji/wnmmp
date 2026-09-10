@@ -56,7 +56,8 @@ tasklist | findstr /i nginx.exe && taskkill /f /im nginx.exe
 
 
 REM ============== PORT PRE-CHECK (detect already-running / installed services) ==============
-echo === 端口占用预检（检测 nginx/mysql/mongodb/php-cgi 是否已被占用）===
+set "MSG1=== 端口占用预检（检测 nginx/mysql/mongodb/php-cgi 是否已被占用）==="
+echo !MSG1!
 if "%WNMMP_SKIP_PORTCHECK%"=="1" (
 	set "MSG1=[port] 已设置 WNMMP_SKIP_PORTCHECK=1，跳过端口预检"
 	echo !MSG1!
@@ -71,7 +72,8 @@ call :portcheck php-cgi 9000 "PHP-CGI" SKIP_PHP_CGI
 
 call "bin\install-vc-redist.bat"
 call "bin\download.bat"
-echo === 初始化数据库（MySQL / MongoDB）===
+set "MSG1=== 初始化数据库（MySQL / MongoDB）==="
+echo !MSG1!
 REM mongodb init (skip if mongodb was skipped)
 if not "%SKIP_MONGODB%"=="1" call "bin\init-mongodb.bat"
 REM mysql init (skip if mysql was skipped)
@@ -105,7 +107,10 @@ if exist "%SKIP_FILE%" (
 	echo ==============================================================
 	set "MSG1=* [跳过安装记录] 本次以下组件未安装（端口被占用，用户选择跳过）："
 	echo !MSG1!
-	for /f "usebackq tokens=*" %%L in ("%SKIP_FILE%") do echo *   - %%L
+	for /f "usebackq tokens=*" %%L in ("%SKIP_FILE%") do (
+		set "MSG2=*   - %%L"
+		echo !MSG2!
+	)
 	set "MSG1=* 说明：nginx / mysql / mongodb 跳过 = 不下载、不初始化、不注册服务；"
 	set "MSG2=*       php-cgi 跳过 = 不注册 FastCGI 服务（PHP 运行时仍正常安装）。"
 	set "MSG3=* 如需补装被跳过的组件：释放对应端口后，删除 tmp\skipped.lst 中对应行，"

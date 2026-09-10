@@ -13,10 +13,12 @@ REM distributed under the License is distributed on an "AS IS" BASIS,
 REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
+setlocal enabledelayedexpansion
 
 set "MYSQL_PATH=%HOME_DIR%\mysql\bin\mysqld.exe"
 
-echo "正在安装 WNMMP MySQL 服务..."
+set "MSG1=正在安装 WNMMP MySQL 服务..."
+echo !MSG1!
 "%NSSM_PATH%" install wnmmp-mysql "!MYSQL_PATH!"
 "%NSSM_PATH%" set wnmmp-mysql Description "WNMMP MySQL DB Server"
 "%NSSM_PATH%" set wnmmp-mysql AppDirectory "%HOME_DIR%\mysql\bin"

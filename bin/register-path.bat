@@ -47,7 +47,8 @@ REM ===========================================================================
 
 set "RP_DE=1"
 if not "!RP_DE!"=="1" (
-	echo "[path] 需要 enabledelayedexpansion，已跳过 PATH 注册"
+	set "MSG1=[path] 需要 enabledelayedexpansion，已跳过 PATH 注册"
+	echo !MSG1!
 	goto :eof
 )
 if not defined HOME_DIR goto :eof
@@ -64,7 +65,8 @@ if "%WNMMP_PATH_SYSTEM%"=="1" if "%PC_ADMIN%"=="1" (
 )
 if "%WNMMP_PATH_SYSTEM%"=="1" (
 	if not "%PC_ADMIN%"=="1" (
-		echo [path] WNMMP_PATH_SYSTEM=1 需要管理员权限，本次仍写入用户 PATH
+		set "MSG1=[path] WNMMP_PATH_SYSTEM=1 需要管理员权限，本次仍写入用户 PATH"
+		echo !MSG1!
 	)
 )
 
@@ -91,8 +93,10 @@ findstr /c:"!" "%RP_BAK%" >nul 2>&1
 set "RP_BANG_RC=%errorlevel%"
 endlocal & set "RP_BANG_RC=%RP_BANG_RC%"
 if "%RP_BANG_RC%"=="0" (
-	echo "[path] 检测到 PATH 中含感叹号，脚本无法安全改写，已跳过"
-	echo "[path] 请手动把 %RP_DIR% 移动到 PATH 的最前面"
+	set "MSG1=[path] 检测到 PATH 中含感叹号，脚本无法安全改写，已跳过"
+	set "MSG2=[path] 请手动把 %RP_DIR% 移动到 PATH 的最前面"
+	echo !MSG1!
+	echo !MSG2!
 	goto :eof
 )
 
@@ -134,20 +138,24 @@ for %%E in ("!RP_LIST!") do (
 
 call :rp_len "!RP_NEW!" RP_LEN
 if !RP_LEN! GTR 2048 (
-	echo "[path] 新 PATH 长度 !RP_LEN! 超过 2048，已放弃改写以免损坏环境变量"
+	set "MSG1=[path] 新 PATH 长度 !RP_LEN! 超过 2048，已放弃改写以免损坏环境变量"
+	echo !MSG1!
 	goto :eof
 )
 
 if "%WNMMP_PATH_DRYRUN%"=="1" (
 	set RP_NEW > "%TMP_DIR%\path-new.txt"
-	echo "[path] DRYRUN 未写入注册表。预览已存到 %TMP_DIR%\path-new.txt"
-	echo "[path] 将置为%RP_SCOPE% PATH 第一项：%RP_DIR%，长度 !RP_LEN!，清掉 !RP_DROP! 条旧记录"
+	set "MSG1=[path] DRYRUN 未写入注册表。预览已存到 %TMP_DIR%\path-new.txt"
+	set "MSG2=[path] 将置为%RP_SCOPE% PATH 第一项：%RP_DIR%，长度 !RP_LEN!，清掉 !RP_DROP! 条旧记录"
+	echo !MSG1!
+	echo !MSG2!
 	goto :eof
 )
 
 reg add "%RP_HIVE%" /v Path /t REG_EXPAND_SZ /d "!RP_NEW!" /f >nul 2>&1
 if errorlevel 1 (
-	echo "[path] 写入 PATH 失败，可能权限不足，已保持原 PATH 不变"
+	set "MSG1=[path] 写入 PATH 失败，可能权限不足，已保持原 PATH 不变"
+	echo !MSG1!
 	goto :eof
 )
 
@@ -158,7 +166,8 @@ for /f "skip=1 tokens=2*" %%a in ('reg query "%RP_HIVE%" /v "Path" 2^>nul') do s
 endlocal & set "RP_CHK=%RP_CHK%"
 if not "!RP_CHK!"=="!RP_NEW!" (
 	reg add "%RP_HIVE%" /v Path /t REG_EXPAND_SZ /d "!RP_OLD!" /f >nul 2>&1
-	echo "[path] 写回校验失败，已还原原 PATH"
+	set "MSG1=[path] 写回校验失败，已还原原 PATH"
+	echo !MSG1!
 	goto :eof
 )
 
@@ -166,8 +175,10 @@ REM ---- broadcast WM_SETTINGCHANGE so new consoles pick it up (setx does it)
 setx WNMMP_PATH_TOUCH 1 >nul 2>&1
 reg delete "HKCU\Environment" /v WNMMP_PATH_TOUCH /f >nul 2>&1
 
-echo "[path] 已把 %RP_DIR% 置于%RP_SCOPE% PATH 的最前面"
-echo "[path] 共扫描 !RP_TOTAL! 条，清掉 !RP_DROP! 条旧 wnmmp 记录，备份见 %RP_BAK%"
+set "MSG1=[path] 已把 %RP_DIR% 置于%RP_SCOPE% PATH 的最前面"
+set "MSG2=[path] 共扫描 !RP_TOTAL! 条，清掉 !RP_DROP! 条旧 wnmmp 记录，备份见 %RP_BAK%"
+echo !MSG1!
+echo !MSG2!
 goto :eof
 
 

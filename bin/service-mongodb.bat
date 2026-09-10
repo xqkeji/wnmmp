@@ -13,10 +13,12 @@ REM distributed under the License is distributed on an "AS IS" BASIS,
 REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
+setlocal enabledelayedexpansion
 
 set "MONGODB_PATH=%HOME_DIR%\mongodb\bin\mongod.exe"
 
-echo "正在安装 WNMMP MongoDB 服务..."
+set "MSG1=正在安装 WNMMP MongoDB 服务..."
+echo !MSG1!
 "%NSSM_PATH%" install wnmmp-mongodb "!MONGODB_PATH!" 
 "%NSSM_PATH%" set wnmmp-mongodb Description "WNMMP MongoDB DB Server"
 "%NSSM_PATH%" set wnmmp-mongodb AppDirectory %HOME_DIR%\mongodb\bin

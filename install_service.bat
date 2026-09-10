@@ -28,7 +28,8 @@ if %errorlevel% neq 0 (
 	echo.
 	set "MSG1=%C_WARN%[警告] 安装/注册 Windows 服务需要管理员权限！%C_RST%"
 	echo !MSG1!
-	echo "请右键单击 install_service.bat，选择以管理员身份运行。"
+	set "MSG1=请右键单击 install_service.bat，选择以管理员身份运行。"
+	echo !MSG1!
 	echo.
 	set "MSG1=按任意键关闭本窗口..."
 	echo !MSG1!
@@ -144,7 +145,8 @@ if exist !INSTALL_FILE! (
 
 	set "MSG1=%C_OK%[√] 所有 wnmmp 服务已安装完成。%C_RST%"
 	echo !MSG1!
-	echo "可在 Windows 服务面板（services.msc）中查看和管理这些服务。"
+	set "MSG1=可在 Windows 服务面板（services.msc）中查看和管理这些服务。"
+	echo !MSG1!
 
 	set HOME_DIR=
 	set PATH=
@@ -153,7 +155,8 @@ if exist !INSTALL_FILE! (
 	pause >nul
 
 ) else (
-    echo "请先运行 install.bat！"
+    set "MSG1=请先运行 install.bat！"
+	echo !MSG1!
 	set "MSG1=按任意键关闭本窗口..."
 	echo !MSG1!
 	pause >nul

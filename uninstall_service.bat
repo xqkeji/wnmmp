@@ -27,9 +27,11 @@ if %errorlevel% neq 0 (
 	echo.
 	set "MSG1=%C_WARN%[警告] 卸载 Windows 服务需要管理员权限！%C_RST%"
 	echo !MSG1!
-	echo "请右键单击 uninstall_service.bat，选择以管理员身份运行。"
+	set "MSG1=请右键单击 uninstall_service.bat，选择以管理员身份运行。"
+	echo !MSG1!
 	echo.
-	echo 按任意键关闭本窗口...
+	set "MSG1=按任意键关闭本窗口..."
+	echo !MSG1!
 	pause >nul
 	exit /b 1
 )
@@ -45,7 +47,8 @@ set "NSSM_PATH=%HOME_DIR%\bin\nssm.exe"
 if not exist "%NSSM_PATH%" (
 	set "MSG1=%C_SKIP%[错误] 未找到 nssm.exe%C_RST%"
 	echo !MSG1!
-	echo 按任意键关闭本窗口...
+	set "MSG1=按任意键关闭本窗口..."
+	echo !MSG1!
 	pause >nul
 	exit /b 1
 )

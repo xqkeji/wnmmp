@@ -13,7 +13,9 @@ REM distributed under the License is distributed on an "AS IS" BASIS,
 REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
-echo [init] 正在检查 MySQL 数据目录是否已初始化 ...
+setlocal enabledelayedexpansion
+set "MSG1=[init] 正在检查 MySQL 数据目录是否已初始化 ..."
+echo !MSG1!
 if not exist "%DATA_DIR%\mysql" (
 	mkdir "%DATA_DIR%\mysql"
 )
@@ -22,7 +24,8 @@ if exist "%DATA_DIR%\mysql\mysql" (
 	echo !MSG1!
 	goto :eof
 )
-echo [init] 开始初始化 MySQL 数据库（首次启动约需 10 秒，请稍候）...
+set "MSG1=[init] 开始初始化 MySQL 数据库（首次启动约需 10 秒，请稍候）..."
+echo !MSG1!
 "%HOME_DIR%\mysql\bin\mysqld.exe" --defaults-file="%CONFIG_DIR%\mysql\my.ini" --datadir="%DATA_DIR%\mysql" --log-error="%LOGS_DIR%\mysql\error.log" --initialize-insecure >nul 2>nul
 start "MySQL Server" /B "%HOME_DIR%\mysql\bin\mysqld.exe" --defaults-file="%CONFIG_DIR%\mysql\my.ini" --datadir="%DATA_DIR%\mysql" --log-error="%LOGS_DIR%\mysql\error.log" >nul 2>nul
 timeout /t 10 /nobreak >nul

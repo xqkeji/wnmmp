@@ -49,7 +49,8 @@ if "%VC_ALREADY%"=="1" (
 )
 
 :vc_install
-echo 正在安装 VC_redist.x64.exe（Microsoft Visual C++ 运行库）……
+set "MSG1=正在安装 VC_redist.x64.exe（Microsoft Visual C++ 运行库）……"
+echo !MSG1!
 "%vc_installer%" /quiet /norestart
 if errorlevel 3010 (
     set "MSG1=[提示] VC_redist 安装完成，但需要重启系统才能生效（退出码 3010）。"

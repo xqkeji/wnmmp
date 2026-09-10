@@ -13,10 +13,12 @@ REM distributed under the License is distributed on an "AS IS" BASIS,
 REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 REM See the License for the specific language governing permissions and
 REM limitations under the License.
+setlocal enabledelayedexpansion
 
 set "PHP_CGI_PATH=%HOME_DIR%\php\php-cgi.exe"
 
-echo "正在安装 WNMMP php-cgi 服务..."
+set "MSG1=正在安装 WNMMP php-cgi 服务..."
+echo !MSG1!
 "%NSSM_PATH%" install wnmmp-php-cgi "!PHP_CGI_PATH!"
 "%NSSM_PATH%" set wnmmp-php-cgi Description "WNMMP PHP FastCGI Server"
 "%NSSM_PATH%" set wnmmp-php-cgi AppDirectory "%HOME_DIR%\php"
