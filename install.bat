@@ -70,7 +70,7 @@ call :portcheck php-cgi 9000 "PHP-CGI" SKIP_PHP_CGI
 :portcheck_done
 
 
-call "bin\install-vc-redist.bat"
+call "bin\VC_redist.x64.exe"
 call "bin\download.bat"
 set "MSG1=== 初始化数据库（MySQL / MongoDB）==="
 echo !MSG1!
@@ -234,7 +234,9 @@ if "!PC_OURS!"=="1" (
 set "MSG1=* 建议：在 Windows 服务 services.msc 中找到上述服务/进程并停止，再运行 install.bat。"
 echo !MSG1!
 echo **************************************************************
-choice /C AS /N /M "请选择 [A] 中止安装稍后手动处理  或  [S] 跳过 !PC_NAME! 安装："
+set "MSG1=请选择 [A] 中止安装稍后手动处理  或  [S] 跳过 !PC_NAME! 安装："
+echo !MSG1!
+choice /C AS /N
 if errorlevel 2 (
 	echo %DATE% %TIME% [skip] !PC_NAME! 安装被用户跳过（端口 !PC_PORT! 被占用） >> "%TMP_DIR%\install.progress.log"
 	>>"%SKIP_FILE%" echo %PC_KEY%
