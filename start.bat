@@ -147,6 +147,19 @@ if "!PC_BUSY!"=="1" (
 	call :svc_msg_free
 )
 where "%SVC_PROC%" >nul 2>&1 && RunHiddenConsole.exe /l %SVC_CMD%
+if errorlevel 1 (
+	call :svc_msg_start_failed
+	goto :start_svc_done
+)
+REM Health check: wait 3 seconds then verify the process is still alive.
+REM If it exited immediately (crash / config error), report the failure.
+timeout /t 3 /nobreak >nul
+tasklist /fi "IMAGENAME eq %SVC_PROC%" /nh 2>nul | findstr /i "%SVC_PROC%" >nul 2>&1
+if errorlevel 1 (
+	call :svc_msg_start_failed
+	goto :start_svc_done
+)
+call :svc_msg_start_ok
 :start_svc_done
 goto :eof
 
@@ -190,5 +203,17 @@ goto :eof
 REM Args: none. Port is free, starting now.
 :svc_msg_free
 set "MSG1=%C_OK%[√] [!SVC_NAME!] 端口 !SVC_PORT! 空闲，正在启动...%C_RST%"
+echo !MSG1!
+goto :eof
+
+REM Args: none. Service failed to start or exited immediately.
+:svc_msg_start_failed
+set "MSG1=%C_WARN%[警告] !SVC_NAME! 启动失败或进程立即退出，请检查日志文件%C_RST%"
+echo !MSG1!
+goto :eof
+
+REM Args: none. Service started successfully and process is running.
+:svc_msg_start_ok
+set "MSG1=%C_OK%[√] [!SVC_NAME!] 启动成功，进程运行中%C_RST%"
 echo !MSG1!
 goto :eof

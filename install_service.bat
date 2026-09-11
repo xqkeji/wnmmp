@@ -114,6 +114,7 @@ if exist !INSTALL_FILE! (
 		echo !MSG1!
 	) else (
 		call "bin\service-nginx.bat"
+		call :check_svc_started "wnmmp-nginx" "Nginx"
 	)
 
 	REM ---- mongodb ----
@@ -123,6 +124,7 @@ if exist !INSTALL_FILE! (
 		echo !MSG1!
 	) else (
 		call "bin\service-mongodb.bat"
+		call :check_svc_started "wnmmp-mongodb" "MongoDB"
 	)
 
 	REM ---- mysql ----
@@ -132,6 +134,7 @@ if exist !INSTALL_FILE! (
 		echo !MSG1!
 	) else (
 		call "bin\service-mysql.bat"
+		call :check_svc_started "wnmmp-mysql" "MySQL"
 	)
 
 	REM ---- php-cgi ----
@@ -141,6 +144,7 @@ if exist !INSTALL_FILE! (
 		echo !MSG1!
 	) else (
 		call "bin\service-php-cgi.bat"
+		call :check_svc_started "wnmmp-php-cgi" "PHP-CGI"
 	)
 
 	set "MSG1=%C_OK%[√] 所有 wnmmp 服务已安装完成。%C_RST%"
@@ -161,5 +165,27 @@ if exist !INSTALL_FILE! (
 	echo !MSG1!
 	pause >nul
 )
+goto :eof
+
+REM ===================== helper :check_svc_started =====================
+REM Args: 1=service name  2=display name
+REM Check if the service started successfully after installation.
+:check_svc_started
+set "SVC_NAME=%~1"
+set "SVC_DISP=%~2"
+set "MSG1=正在检查 !SVC_DISP! 服务状态..."
+echo !MSG1!
+timeout /t 2 /nobreak >nul
+for /f "tokens=3" %%s in ('sc query "!SVC_NAME!" ^| findstr /i "STATE"') do set "SVC_STATE=%%s"
+if /i "!SVC_STATE!"=="RUNNING" (
+	set "MSG1=%C_OK%[√] !SVC_DISP! 服务已成功启动%C_RST%"
+	echo !MSG1!
+) else (
+	set "MSG1=%C_WARN%[警告] !SVC_DISP! 服务启动失败或状态异常（当前状态：!SVC_STATE!）%C_RST%"
+	echo !MSG1!
+	set "MSG2=请检查日志文件或使用 services.msc 查看详细信息"
+	echo !MSG2!
+)
+goto :eof
 
 
