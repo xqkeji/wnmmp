@@ -31,7 +31,9 @@ REM composer.phar / pie.phar 由用户自行下载后放入 bin\composer，脚�
 REM （GitHub 等通道在国内不稳定）。这里只做「就位检测」+ 配置 + PATH 注册。
 set "COMPOSER_PHAR=%COMPOSER_DIR%\composer.phar"
 if exist "%COMPOSER_PHAR%" (
-	call "%COMPOSER_DIR%\composer.bat" config --global use-parent-dir true >nul 2>&1
+	call "%COMPOSER_DIR%\composer.bat" config --global repos.packagist.org composer https://mirrors.tencent.com/composer/ >nul 2>&1
+	set "MSG2=[composer] 已配置腾讯 Composer 镜像（国内访问加速）。"
+	echo !MSG2!
 	set "MSG1=[composer] 检测到 composer.phar（请确保已自行放入 bin\composer），已就绪。"
 	echo !MSG1!
 ) else (
