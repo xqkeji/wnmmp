@@ -143,6 +143,7 @@ for /r "%TMP_DIR%\download\php-%FB_ZIP%" %%d in (%FB_DLL%) do (
 )
 if not defined FOUND_DLL goto pecl_dllmiss
 copy "%FOUND_DLL%" "%PHP_EXT_DIR%" /Y
+
 if exist "%PHP_EXT_DIR%\%FB_DLL%" (
 	call :enable_ext %FB_EXT% %FB_KIND%
 	echo %DATE% %TIME% [php] %FB_EXT% installed via PECL（%FB_VER% / php %PHP_MM%） >> "%TMP_DIR%\install.progress.log"
@@ -223,6 +224,13 @@ for /r "%TMP_DIR%\download\php-xqkeji" %%d in (*php_xqkeji.dll) do (
 )
 if not defined FOUND_DLL goto xqkeji_dllmiss
 copy "%FOUND_DLL%" "%PHP_EXT_DIR%" /Y
+REM Carry php-xqkeji's license files alongside the DLL (dual-license / proprietary).
+REM They ship in the same versioned folder as the DLL; copy them best-effort so the
+REM binary distribution always includes LICENSE.md + NOTICES (must not be removed).
+set "XQ_DIR="
+for %%p in ("%FOUND_DLL%") do set "XQ_DIR=%%~dpP"
+if exist "%XQ_DIR%LICENSE.md" copy "%XQ_DIR%LICENSE.md" "%PHP_EXT_DIR%" /Y >nul 2>nul
+if exist "%XQ_DIR%NOTICES" copy "%XQ_DIR%NOTICES" "%PHP_EXT_DIR%" /Y >nul 2>nul
 if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
 	call :enable_ext xqkeji ext
 	echo %DATE% %TIME% [php] xqkeji installed（%XQ_TAG%） >> "%TMP_DIR%\install.progress.log"

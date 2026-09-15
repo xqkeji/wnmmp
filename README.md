@@ -63,5 +63,11 @@ wnmmp 提供了一系列脚本和工具来管理服务和组件。以下是主�
 - 修改配置文件后，需重启对应服务以生效。
 - 日志文件可用于排查服务运行中的问题。
 
+#### 第三方组件许可与协议
+- **wnmmp 本体**（脚本、配置等）以 Apache License 2.0 发布，详见仓库根 `LICENSE` 文件。
+- 集成包内附带的第三方组件保留各自许可证，随官方发布物提供；其中：
+  - **php-xqkeji**（xqkeji 低代码开发框架 PHP 扩展，二进制 `php_xqkeji.dll`）：采用「双重授权」协议（专有软件）。其二进制随包分发时必须附带 `LICENSE.md` 与 `NOTICES`（含 Phalcon BSD-3-Clause、Zephir MIT 第三方声明）且不得移除。`install.bat` 执行后会把这两个文件安装到 `php/ext/` 目录（与 `php_xqkeji.dll` 同目录）。基于该扩展开发的应用须遵循其双重授权条款：以 OSI 认证开源协议开源用户代码，或向授权方获取商业授权。详见 https://xqkeji.cn/。
+  - Nginx / MySQL / MongoDB / PHP / Composer / nssm / RunHiddenConsole 等：各自遵循其官方许可证。
+
 #### 许可证
-本项目遵循 Apache License 2.0 许可证。有关详细信息，请参阅 `LICENSE` 文件。
+wnmmp 本体遵循 Apache License 2.0 许可证。有关详细信息，请参阅 `LICENSE` 文件。
