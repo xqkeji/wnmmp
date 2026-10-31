@@ -34,7 +34,7 @@ echo ==============================================================
 call :stop_one nginx.exe wnmmp-nginx 80
 call :stop_one mysqld.exe wnmmp-mysql 3306
 call :stop_one mongod.exe wnmmp-mongodb 27017
-call :stop_one php-cgi.exe wnmmp-php-cgi 9000
+call :stop_php_cgi
 
 echo.
 if "!EXT_OCC!"=="1" (
@@ -120,6 +120,54 @@ REM Args: none. Reports an external port owner; never stops other services.
 :stop_msg_ext
 set "MSG1=%C_WARN%[警告] 端口 !PORT! 被外部组件占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）%C_RST%"
 set "MSG2=[提示] 该进程/服务非 wnmmp 组件，停止脚本不会自动处理，请手动停止该外部组件后再重试 stop.bat。"
+echo !MSG1!
+echo !MSG2!
+set "EXT_OCC=1"
+goto :eof
+
+REM ===================== helper :stop_php_cgi =====================
+REM php-cgi runs one process per port (PHP_CGI_PORT+i-1, count from
+REM etc\php\php-cgi.conf), so every registered instance is stopped by service
+REM name first: nssm restarts a php-cgi.exe that is only killed, and the
+REM respawned process would hold its port again.
+:stop_php_cgi
+call bin\php-cgi-util.bat :load
+call bin\php-cgi-util.bat :count_procs
+for /L %%i in (1,1,%PHP_CGI_SVC_MAX%) do call :stop_php_svc "%%i"
+call :stop_php_svc "0"
+taskkill /f /im php-cgi.exe >nul 2>&1
+set "MSG1=[PHP-CGI] 已结束 !PHP_CGI_RUNNING! 个 php-cgi 进程（配置 !PHP_CGI_PROCESSES! 个，端口 !PHP_CGI_PORT!-!PHP_CGI_PORT_END!）"
+echo !MSG1!
+for /L %%i in (1,1,%PHP_CGI_PROCESSES%) do call :stop_php_port "%%i"
+goto :eof
+
+REM Args: 1=instance index. Index 0 is the unsuffixed wnmmp-php-cgi service of
+REM the older single-process layout, stopped too so an upgrade leaves nothing
+REM running behind.
+:stop_php_svc
+set "PCGI_SVC=wnmmp-php-cgi-%~1"
+if "%~1"=="0" set "PCGI_SVC=wnmmp-php-cgi"
+sc query "%PCGI_SVC%" >nul 2>&1
+if errorlevel 1 goto :eof
+set "MSG1=停止服务 %PCGI_SVC% ..."
+echo !MSG1!
+net stop "%PCGI_SVC%" /y >nul 2>&1
+goto :eof
+
+REM Args: 1=instance index. A port that is still held after the stop is
+REM reported, never taken over by force when the owner is foreign.
+:stop_php_port
+set /a "PCGI_PORT=%PHP_CGI_PORT%+%~1-1"
+set "PC_BUSY=0" & set "PC_PID=" & set "PC_IMG=" & set "PC_SVC=N/A"
+call bin\port-util.bat :port_owner %PCGI_PORT% PC_BUSY PC_PID PC_IMG PC_SVC
+if not "!PC_BUSY!"=="1" goto :eof
+call :stop_php_port_msg
+goto :eof
+
+REM Args: none. Runs with PCGI_PORT / PC_IMG / PC_PID / PC_SVC filled in.
+:stop_php_port_msg
+set "MSG1=%C_WARN%[警告] php-cgi 端口 !PCGI_PORT! 停止后仍被占用（!PC_IMG! PID=!PC_PID! 服务=!PC_SVC!）%C_RST%"
+set "MSG2=[提示] 占用者若是外部进程，stop.bat 不会强行停止它，请手动处理后重试。"
 echo !MSG1!
 echo !MSG2!
 set "EXT_OCC=1"

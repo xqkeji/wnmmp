@@ -36,6 +36,7 @@ if %errorlevel% neq 0 (
 	exit /b 1
 )
 
+cd /d %~dp0
 set "script_dir_with_slash=%~dp0"
 set "HOME_DIR=%script_dir_with_slash:~0,-1%"
 set "TMP_DIR=%HOME_DIR%\tmp"
@@ -86,12 +87,35 @@ if not errorlevel 1 (
 	set "MSG1=%C_SKIP%[×] [skip] php-cgi：未安装，跳过卸载%C_RST%"
 	echo !MSG1!
 ) else (
-	%NSSM_PATH% stop wnmmp-php-cgi
-	%NSSM_PATH% remove wnmmp-php-cgi confirm
+	call :remove_php_cgi
 )
 
 echo.
 set "MSG1=%C_OK%[√] 卸载完成。按任意键关闭本窗口...%C_RST%"
 echo !MSG1!
 pause >nul
+
+REM ===================== helper :remove_php_cgi =====================
+REM php-cgi runs one Windows service per process, so every possible instance
+REM name is walked up to PHP_CGI_SVC_MAX. The configured count is NOT used
+REM here: instances left over from a bigger processes value must go too, and
+REM the unsuffixed wnmmp-php-cgi name of the older single-process layout goes
+REM with them (index 0).
+:remove_php_cgi
+call bin\php-cgi-util.bat :load
+for /L %%i in (1,1,%PHP_CGI_SVC_MAX%) do call :remove_php_svc "%%i"
+call :remove_php_svc "0"
+goto :eof
+
+REM Args: 1=instance index. Does nothing when that service is not registered.
+:remove_php_svc
+set "PCGI_SVC=wnmmp-php-cgi-%~1"
+if "%~1"=="0" set "PCGI_SVC=wnmmp-php-cgi"
+sc query "%PCGI_SVC%" >nul 2>&1
+if errorlevel 1 goto :eof
+"%NSSM_PATH%" stop "%PCGI_SVC%" >nul 2>&1
+"%NSSM_PATH%" remove "%PCGI_SVC%" confirm >nul 2>&1
+set "MSG1=已卸载服务 %PCGI_SVC%"
+echo !MSG1!
+goto :eof
 

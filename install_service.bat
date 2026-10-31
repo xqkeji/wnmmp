@@ -143,8 +143,7 @@ if exist !INSTALL_FILE! (
 		set "MSG1=%C_SKIP%[×] [skip] php-cgi：已在跳过清单，不注册服务%C_RST%"
 		echo !MSG1!
 	) else (
-		call "bin\service-php-cgi.bat"
-		call :check_svc_started "wnmmp-php-cgi" "PHP-CGI"
+		call :install_php_cgi
 	)
 
 	set "MSG1=%C_OK%[√] 所有 wnmmp 服务已安装完成。%C_RST%"
@@ -176,6 +175,9 @@ set "SVC_DISP=%~2"
 set "MSG1=正在检查 !SVC_DISP! 服务状态..."
 echo !MSG1!
 timeout /t 2 /nobreak >nul
+REM Cleared first: the loop below checks one service after another, and a
+REM service that is not registered leaves the previous state in place.
+set "SVC_STATE=UNKNOWN"
 for /f "tokens=3" %%s in ('sc query "!SVC_NAME!" ^| findstr /i "STATE"') do set "SVC_STATE=%%s"
 if /i "!SVC_STATE!"=="RUNNING" (
 	set "MSG1=%C_OK%[√] !SVC_DISP! 服务已成功启动%C_RST%"
@@ -186,6 +188,26 @@ if /i "!SVC_STATE!"=="RUNNING" (
 	set "MSG2=请检查日志文件或使用 services.msc 查看详细信息"
 	echo !MSG2!
 )
+goto :eof
+
+REM ===================== helper :install_php_cgi =====================
+REM One Windows service per php-cgi process: wnmmp-php-cgi-i listens on
+REM PHP_CGI_PORT+i-1, so the process count also decides how many services are
+REM registered. The count comes from etc\php\php-cgi.conf and the nginx
+REM upstream list is rebuilt from it here, so a changed count is picked up at
+REM the next start.
+:install_php_cgi
+call bin\php-cgi-util.bat :load
+call bin\php-cgi-util.bat :gen_nginx
+call "bin\service-php-cgi.bat"
+for /L %%i in (1,1,%PHP_CGI_PROCESSES%) do call :check_php_cgi_one "%%i"
+goto :eof
+
+REM Args: 1=instance index.
+:check_php_cgi_one
+set "PCGI_SVC=wnmmp-php-cgi-%~1"
+set "PCGI_DISP=PHP-CGI #%~1"
+call :check_svc_started "%PCGI_SVC%" "%PCGI_DISP%"
 goto :eof
 
 

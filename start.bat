@@ -80,7 +80,7 @@ if not errorlevel 1 (
 	set "MSG1=%C_SKIP%[×] [skip] php-cgi：已在跳过清单，不启动%C_RST%"
 	echo !MSG1!
 ) else (
-	call :start_svc php-cgi.exe "PHP-CGI" "php-cgi.exe -c %HOME_DIR%\etc\php\php.ini -b 127.0.0.1:9000 -d error_log=""%HOME_DIR%\logs\php\error.log""" 9000
+	call :start_php_cgi
 )
 
 REM ---- nginx ----
@@ -216,4 +216,86 @@ REM Args: none. Service started successfully and process is running.
 :svc_msg_start_ok
 set "MSG1=%C_OK%[√] [!SVC_NAME!] 启动成功，进程运行中%C_RST%"
 echo !MSG1!
+goto :eof
+
+REM ===================== php-cgi multi-process startup =====================
+REM One php-cgi.exe process per port: instance i listens on PHP_CGI_PORT+i-1,
+REM so 4 processes means 9000-9003. The count and the first port live in
+REM etc\php\php-cgi.conf; nginx spreads the requests over the whole set
+REM through the upstream in etc\nginx\php_processes.conf, which is rebuilt
+REM here before nginx starts.
+:start_php_cgi
+call bin\php-cgi-util.bat :load
+call bin\php-cgi-util.bat :gen_nginx
+call :php_cgi_preclean
+set "MSG1=[PHP-CGI] 计划启动 !PHP_CGI_PROCESSES! 个 php-cgi 进程，端口 !PHP_CGI_PORT!-!PHP_CGI_PORT_END!"
+echo !MSG1!
+for /L %%i in (1,1,!PHP_CGI_PROCESSES!) do call :php_cgi_start_one "%%i"
+call :php_cgi_verify
+goto :eof
+
+REM Args: 1=instance index. Command line is the old single-process one with
+REM the per-instance port substituted.
+:php_cgi_start_one
+set "PCGI_I=%~1"
+set /a "PCGI_PORT=%PHP_CGI_PORT%+%PCGI_I%-1"
+set "PCGI_NAME=PHP-CGI #%PCGI_I%"
+set "PCGI_CMD=php-cgi.exe -c %HOME_DIR%\etc\php\php.ini -b 127.0.0.1:%PCGI_PORT% -d error_log=""%HOME_DIR%\logs\php\error.log"""
+call :start_svc php-cgi.exe "%PCGI_NAME%" "%PCGI_CMD%" %PCGI_PORT%
+goto :eof
+
+REM No-arg helper. Leftovers must go before the loop, because :start_svc only
+REM ever frees one port and would otherwise kill the instances started before
+REM it. Registered services go first (AppExit Restart would respawn the
+REM process), then any php-cgi.exe that is still up. Skipped when nothing runs
+REM yet, so an unrelated php-cgi.exe is never killed for no reason.
+:php_cgi_preclean
+call bin\php-cgi-util.bat :count_procs
+if "%PHP_CGI_RUNNING%"=="0" goto :eof
+for /L %%i in (1,1,%PHP_CGI_SVC_MAX%) do call :php_cgi_stop_svc "%%i"
+call :php_cgi_stop_svc "0"
+taskkill /f /im php-cgi.exe >nul 2>&1
+timeout /t 1 /nobreak >nul
+goto :eof
+
+REM Args: 1=instance index. Index 0 is the unsuffixed wnmmp-php-cgi service
+REM registered by older wnmmp builds; it binds the first port and must not
+REM compete with the new per-port instances.
+:php_cgi_stop_svc
+set "PCGI_SVC=wnmmp-php-cgi-%~1"
+if "%~1"=="0" set "PCGI_SVC=wnmmp-php-cgi"
+sc query "%PCGI_SVC%" >nul 2>&1
+if errorlevel 1 goto :eof
+net stop "%PCGI_SVC%" /y >nul 2>&1
+goto :eof
+
+REM No-arg helper. Counts the ports that really listen, which is the only
+REM proof that the process is alive AND bound: :start_svc can only check that
+REM some php-cgi.exe exists, and with several instances that says nothing
+REM about this one.
+:php_cgi_verify
+set "PCGI_OK=0"
+set "PCGI_BAD="
+for /L %%i in (1,1,%PHP_CGI_PROCESSES%) do call :php_cgi_check_port "%%i"
+set "MSG1=%C_OK%[√] [PHP-CGI] 多进程就绪：!PCGI_OK!/!PHP_CGI_PROCESSES! 个端口在监听（!PHP_CGI_PORT!-!PHP_CGI_PORT_END!）%C_RST%"
+echo !MSG1!
+if "!PCGI_OK!"=="!PHP_CGI_PROCESSES!" goto :eof
+set "MSG1=%C_WARN%[警告] 这些端口上没有 php-cgi 进程：%PCGI_BAD%，该实例未启动或端口被外部占用，请检查 logs\php\error.log%C_RST%"
+echo !MSG1!
+goto :eof
+
+REM Args: 1=instance index. A port counts only when our own php-cgi.exe holds
+REM it; a free port or an external owner is collected in PCGI_BAD.
+:php_cgi_check_port
+set /a "PCGI_PORT=%PHP_CGI_PORT%+%~1-1"
+set "PC_BUSY=0" & set "PC_PID=" & set "PC_IMG=" & set "PC_SVC=N/A"
+call bin\port-util.bat :port_owner %PCGI_PORT% PC_BUSY PC_PID PC_IMG PC_SVC
+if not "!PC_BUSY!"=="1" goto :php_cgi_check_missing
+if /i not "!PC_IMG!"=="php-cgi.exe" goto :php_cgi_check_missing
+set /a "PCGI_OK+=1"
+goto :eof
+
+REM Args: none. Reached with PCGI_PORT holding the port that is not ours.
+:php_cgi_check_missing
+set "PCGI_BAD=!PCGI_BAD! %PCGI_PORT%"
 goto :eof

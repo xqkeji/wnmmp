@@ -1,6 +1,6 @@
 # wnmmp
 
-- window+nginx+mysql+mongodb+php绿色集成开发环境（mongodb-8.0.11、mongosh-2.5.5、mysql-8.4.5、nginx-1.28.0、php-8.4.10）。
+- window+nginx+mysql+mongodb+php绿色集成开发环境（mongodb、mongosh、mysql、nginx、php）。
 - 双击"install.bat"时会自动运行bin目录里的“VC_redist.x64.exe”进行安装（php要运行需要Microsoft Visual C++运行库），如果已安装，可以直接关闭“VC_redist.x64.exe”的安装程序，"install.bat"会自动下载相关组件并自动完成初始化。
 - 安装完成后，会将bin/composer/目录添加到系统环境变量。
 
@@ -29,6 +29,7 @@ wnmmp 提供了一系列脚本和工具来管理服务和组件。以下是主�
 - **MySQL**：`etc/mysql/my.ini`
 - **MongoDB**：`etc/mongodb/mongo.conf`
 - **PHP**：`etc/php/php.ini`
+- **PHP-CGI 多进程**：`etc/php/php-cgi.conf`（`processes` 进程数，默认 4；`port` 第一个进程的端口，默认 9000，第 i 个进程监听 port+i-1）。nginx 的 `etc/nginx/php_processes.conf` 由脚本按这份配置自动生成，不要手工编辑。
 
 #### 日志和数据
 - **日志目录**：

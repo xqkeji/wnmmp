@@ -66,7 +66,7 @@ if "%WNMMP_SKIP_PORTCHECK%"=="1" (
 call :portcheck nginx 80 "Nginx" SKIP_NGINX
 call :portcheck mysql 3306 "MySQL" SKIP_MYSQL
 call :portcheck mongodb 27017 "MongoDB" SKIP_MONGODB
-call :portcheck php-cgi 9000 "PHP-CGI" SKIP_PHP_CGI
+call :portcheck_php_cgi SKIP_PHP_CGI
 :portcheck_done
 
 
@@ -268,6 +268,43 @@ for /f "tokens=1,2* delims=," %%a in ('tasklist /svc /fi "PID eq %~1" /fo csv /n
 	set "%~2=%%~a"
 	set "%~3=%%~c"
 )
+goto :eof
+
+
+REM ===================== helper :portcheck_php_cgi =====================
+REM Args: %1=output skip-flag var
+REM php-cgi runs PHP_CGI_PROCESSES instances on consecutive ports (see
+REM etc\php\php-cgi.conf), so probing 9000 alone is not enough -- every
+REM instance port is checked. The skipped.lst key stays the single component
+REM key "php-cgi", because start.bat / stop.bat / install_service.bat gate the
+REM whole component on that one line, so a skipped instance skips php-cgi.
+:portcheck_php_cgi
+set "PC_SKIPVAR=%~1"
+set "%PC_SKIPVAR%=0"
+if not exist "%SKIP_FILE%" goto :pc_php_scan
+findstr /x /i /c:"php-cgi" "%SKIP_FILE%" >nul 2>&1
+if errorlevel 1 goto :pc_php_scan
+set "MSG1=%C_SKIP%[×] [skip] PHP-CGI 已在跳过清单（tmp\skipped.lst），本次不安装/不检测%C_RST%"
+echo !MSG1!
+set "%PC_SKIPVAR%=1"
+goto :eof
+:pc_php_scan
+call bin\php-cgi-util.bat :load
+for /L %%i in (1,1,!PHP_CGI_PROCESSES!) do call :pc_php_cgi_one "%%i"
+goto :eof
+
+REM Args: 1=instance index. One :portcheck call per instance port. Once the
+REM component is skipped the remaining ports are not probed -- a skip is a
+REM whole-component decision, so asking again would only repeat the answer.
+:pc_php_cgi_one
+set "PC_SKIPPED=!%PC_SKIPVAR%!"
+if "!PC_SKIPPED!"=="1" goto :eof
+set /a "PCGI_PORT=PHP_CGI_PORT+%~1-1"
+call :portcheck php-cgi "!PCGI_PORT!" "PHP-CGI #%~1" "!PC_SKIPVAR!"
+set "PC_SKIPPED=!%PC_SKIPVAR%!"
+if not "!PC_SKIPPED!"=="1" goto :eof
+set "MSG1=[port] PHP-CGI 组件已整体跳过，不再检查其余实例端口。"
+echo !MSG1!
 goto :eof
 
 
