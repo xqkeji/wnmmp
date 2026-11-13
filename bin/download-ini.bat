@@ -86,12 +86,18 @@ set "MONGOSH_ZIP_DIR=mongosh-%CFG_mongosh%-win32-x64"
 
 REM ---------------------------------------------------------------------------
 REM php runtime
+REM The download is pinned to releases/archives, not releases/: windows.php.net
+REM keeps only the current build in releases/ and moves the rest here, so a
+REM pinned version would stop resolving the day the next patch ships. Both
+REM directories carry the same bytes -- same sha256 as releases.json.
+REM wnmmp.ini holds the full release id as the vendor publishes it, build
+REM suffix included: php=8.5.12-1 downloads php-8.5.12-1-nts-Win32-vs17-x64.zip.
 REM The 3 PECL extensions (mongodb / apcu / xdebug) are deliberately NOT listed
 REM here: bin/download-php.bat resolves them at RUNTIME from the actually
 REM installed php.exe version and picks the matching nts/vs17/x64 build, so
 REM changing php= in wnmmp.ini can never desync them.
 REM ---------------------------------------------------------------------------
-set "PHP_DOWNLOAD_URL=https://windows.php.net/downloads/releases/php-%CFG_php%-nts-Win32-vs17-x64.zip"
+set "PHP_DOWNLOAD_URL=https://windows.php.net/downloads/releases/archives/php-%CFG_php%-nts-Win32-vs17-x64.zip"
 
 REM ---------------------------------------------------------------------------
 REM xqkeji extension (gitee). The tag doubles as the version, e.g. v1.1.2-php8.5
