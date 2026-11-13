@@ -26,12 +26,15 @@ set "HOME_DIR=%script_dir_with_slash:~0,-1%"
 set PATH=C:\Windows\System32;%HOME_DIR%\bin;%HOME_DIR%\mongodb\bin;%HOME_DIR%\mysql\bin;%HOME_DIR%\php;%HOME_DIR%\nginx;%PATH%
 set "NSSM_PATH=%HOME_DIR%\bin\nssm.exe"
 set "EXT_OCC=0"
+REM After bin\make-ssl.bat the sites listen on 443, so nginx must be looked up
+REM on that port instead of a hard-coded 80.
+call bin\ssl-util.bat :nginx_port NGINX_PORT
 
 echo ==============================================================
 echo  WNMMP 停止：停止 wnmmp 组件，并检测外部端口占用
 echo ==============================================================
 
-call :stop_one nginx.exe wnmmp-nginx 80
+call :stop_one nginx.exe wnmmp-nginx !NGINX_PORT!
 call :stop_one mysqld.exe wnmmp-mysql 3306
 call :stop_one mongod.exe wnmmp-mongodb 27017
 call :stop_php_cgi

@@ -1,5 +1,6 @@
 /data/mongodb
 /data/mysql
+/etc/nginx/ssl
 /logs/*.log
 /logs/*/*.log
 /logs/nginx/nginx.pid

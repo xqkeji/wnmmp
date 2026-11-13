@@ -38,6 +38,9 @@ if not defined HOME set "HOME=%TMP_DIR%"
 set DOWNLOAD_DIR=%TMP_DIR%\download
 REM skipped-install record: each line is a component key (nginx / mysql / mongodb / php-cgi)
 set "SKIP_FILE=%TMP_DIR%\skipped.lst"
+REM when bin\make-ssl.bat switched the sites to 443, nginx must be probed on
+REM that port; on a fresh install (no conf.d yet) this reports 80.
+call bin\ssl-util.bat :nginx_port NGINX_PORT
 
 REM ---- admin (elevation) check: required to stop Windows services ----
 REM net session needs admin; on non-admin it errors -> PC_ADMIN=0
@@ -63,7 +66,7 @@ if "%WNMMP_SKIP_PORTCHECK%"=="1" (
 	echo !MSG1!
 	goto :portcheck_done
 )
-call :portcheck nginx 80 "Nginx" SKIP_NGINX
+call :portcheck nginx !NGINX_PORT! "Nginx" SKIP_NGINX
 call :portcheck mysql 3306 "MySQL" SKIP_MYSQL
 call :portcheck mongodb 27017 "MongoDB" SKIP_MONGODB
 call :portcheck_php_cgi SKIP_PHP_CGI

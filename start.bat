@@ -34,6 +34,9 @@ set TMP_DIR=%HOME_DIR%\tmp
 set INSTALL_FILE=%TMP_DIR%\install.lock
 REM skipped-install record (each line: nginx / mysql / mongodb / php-cgi)
 set "SKIP_FILE=%TMP_DIR%\skipped.lst"
+REM nginx listens on 443 once bin\make-ssl.bat switched the sites over, so the
+REM nginx health check below uses that port instead of a hard-coded 80.
+call bin\ssl-util.bat :nginx_port NGINX_PORT
 
 if not exist "%INSTALL_FILE%" (
     echo "请先运行 install.bat！"
@@ -89,7 +92,7 @@ if not errorlevel 1 (
 	set "MSG1=%C_SKIP%[×] [skip] nginx：已在跳过清单，不启动%C_RST%"
 	echo !MSG1!
 ) else (
-	call :start_svc nginx.exe "Nginx" "nginx.exe -p %HOME_DIR%\ -c %HOME_DIR%\etc\nginx\nginx.conf" 80
+	call :start_svc nginx.exe "Nginx" "nginx.exe -p %HOME_DIR%\ -c %HOME_DIR%\etc\nginx\nginx.conf" !NGINX_PORT!
 )
 
 set HOME_DIR=
