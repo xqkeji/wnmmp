@@ -32,6 +32,7 @@ wnmmp 提供了一系列脚本和工具来管理服务和组件。以下是主�
 - **PHP**：`etc/php/php.ini`
 - **PHP-CGI 多进程**：`etc/php/php-cgi.conf`（`processes` 进程数，默认 4；`port` 第一个进程的端口，默认 9000，第 i 个进程监听 port+i-1）。nginx 的 `etc/nginx/php_processes.conf` 由脚本按这份配置自动生成，不要手工编辑。
 - **HTTPS**：`etc/nginx/ssl.conf`（证书路径与 TLS 参数，由 `nginx.conf` 里的 `include ssl.conf;` 引入）；证书文件在 `etc/nginx/ssl/`（不入库）。
+- **目录禁止执行 PHP**：`etc/nginx/php_no_exec.conf`（`asset/`、`upload/` 目录里的 php 文件一律不解析执行，返回 403）。`etc/nginx/conf.d/` 下每个虚拟主机都要在 `location /` 里面、`location ~ \.php$` 之前加一行 `include php_no_exec.conf;`——顺序不能换，放在 server 层也拦不住 php 处理块。
 
 #### 日志和数据
 - **日志目录**：
