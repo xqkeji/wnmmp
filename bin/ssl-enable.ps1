@@ -4,22 +4,26 @@
 # so non-ASCII literals in a .ps1 break the parse. bin\make-ssl.bat owns all
 # user-facing text.
 #
-# The certificate directives live in etc\nginx\ssl.conf and are included ONCE at
-# http level, so a server block never carries them and a block with two listen
-# lines ([::]:443 next to 443) still cannot duplicate them. The switch is three
-# exact inverse edits:
+# The certificate directives live in etc\nginx\ssl.conf and the port-80 redirect
+# lives in etc\nginx\http_redirect.conf; both are included ONCE at http level,
+# so a server block never carries them and a block with two listen lines
+# ([::]:443 next to 443) still cannot duplicate them. The switch is four exact
+# inverse edits:
 #
 #   enable : nginx.conf           + include ssl.conf;
+#                                 + include http_redirect.conf;
 #            listen 80 [params]    -> listen 443 ssl [params]
 #            proxy_pass http://127.0.0.1/  ->  https://
-#   disable: the same three, back to plain HTTP. With the ssl.conf include gone
+#   disable: the same four, back to plain HTTP. With both include lines gone
 #            nginx no longer reads any certificate file, so switching off does
-#            not depend on etc\ssl still being there.
+#            not depend on etc\nginx\ssl still being there, and port 80 goes
+#            back to the sites instead of the redirect block.
 #
 # The loopback proxy only needs its scheme changed: proxy_ssl_verify defaults to
 # off in nginx, so a locally trusted certificate is never re-checked there.
-# http -> https is what makes it keep working once port 80 stops listening; any
-# other proxy_pass target is left exactly as its author wrote it.
+# http -> https is what keeps a proxied sub-path working, because the virtual
+# host behind it only listens on 443 after the switch has run; any other
+# proxy_pass target is left exactly as its author wrote it.
 
 param(
     [Parameter(Mandatory = $true)][string] $Root,
@@ -40,6 +44,7 @@ if (-not (Test-Path -LiteralPath $confDir) -or -not (Test-Path -LiteralPath $ngi
 $siteInclude  = [regex] '(?m)^([ \t]*)include[ \t]+conf\.d/\*\.conf;([ \t]*)(\r?\n)'
 $httpOpen     = [regex] '(?m)^http[ \t]*\{(\r?\n)'
 $sslInclude   = [regex] '(?m)^([ \t]*)include[ \t]+ssl\.conf;([ \t]*)(\r?\n)'
+$redirectInclude = [regex] '(?m)^([ \t]*)include[ \t]+http_redirect\.conf;([ \t]*)(\r?\n)'
 
 # --- listen / proxy shapes ----------------------------------------------------
 # 1 indent  2 spacing  3 optional [::]:  4 extra params  5 after-semicolon  6 newline
@@ -48,16 +53,27 @@ $offListening = [regex] '(?m)^([ \t]*)listen([ \t]+)(\[::\]:)?443([ \t]+ssl)([ \
 $onProxying   = [regex] 'proxy_pass([ \t]+)http://127\.0\.0\.1'
 $offProxying  = [regex] 'proxy_pass([ \t]+)https://127\.0\.0\.1'
 
-function Switch-NginxConf([string] $Text) {
-    if ($Action -ne 'enable') { return $sslInclude.Replace($Text, '') }
-    if ($sslInclude.IsMatch($Text)) { return $Text }
+function Add-Include([string] $Text, [regex] $Pattern, [string] $Line) {
+    # Each include is added on its own test, so a config that already carries
+    # one of them - switched by an older build of this tool, which knew only
+    # ssl.conf - gains the missing line instead of a duplicate certificate
+    # include that nginx -t would reject.
+    if ($Pattern.IsMatch($Text)) { return $Text }
     if ($siteInclude.IsMatch($Text)) {
-        return $siteInclude.Replace($Text, '$1include ssl.conf;$2$3' + '$0', 1)
+        return $siteInclude.Replace($Text, ('$1' + $Line + ';$2$3$0'), 1)
     }
     if ($httpOpen.IsMatch($Text)) {
-        return $httpOpen.Replace($Text, '$0$1include ssl.conf;$1', 1)
+        return $httpOpen.Replace($Text, ('$0$1' + $Line + ';$1'), 1)
     }
     return $Text
+}
+
+function Switch-NginxConf([string] $Text) {
+    if ($Action -ne 'enable') {
+        return $sslInclude.Replace($redirectInclude.Replace($Text, ''), '')
+    }
+    $t = Add-Include $Text $sslInclude 'include ssl.conf'
+    return Add-Include $t $redirectInclude 'include http_redirect.conf'
 }
 
 function Switch-Site([string] $Text) {
@@ -80,7 +96,7 @@ $newMain = Switch-NginxConf $main
 if ($newMain -eq $main) {
     Write-Output ('ssl-enable: {0} nginx.conf (no change)' -f $Action)
 }
-elseif ($Action -eq 'enable' -and -not $sslInclude.IsMatch($newMain)) {
+elseif ($Action -eq 'enable' -and (-not $sslInclude.IsMatch($newMain) -or -not $redirectInclude.IsMatch($newMain))) {
     # No usable anchor in nginx.conf. Leaving the sites on 443 without the
     # certificate include would start nginx with no TLS context at all, so the
     # switch is refused instead of half applied.
@@ -89,7 +105,7 @@ elseif ($Action -eq 'enable' -and -not $sslInclude.IsMatch($newMain)) {
 }
 else {
     [System.IO.File]::WriteAllText($nginxConf, $newMain)
-    Write-Output ('ssl-enable: {0} nginx.conf (include={1})' -f $Action, $sslInclude.IsMatch($newMain))
+    Write-Output ('ssl-enable: {0} nginx.conf (ssl={1} redirect={2})' -f $Action, $sslInclude.IsMatch($newMain), $redirectInclude.IsMatch($newMain))
 }
 
 $changed = 0

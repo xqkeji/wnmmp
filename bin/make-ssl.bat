@@ -60,16 +60,34 @@ goto :do_help
 
 REM ===================== enable =====================
 :do_enable
-call :require
+call :require enable
 if errorlevel 1 exit /b 1
-call :state
-set "MSG1=目标：443 https（同时停止监听 80）"
+call "%BIN_DIR%\ssl-util.bat" :https_enabled HTTPS_ON
+if not "!HTTPS_ON!"=="1" goto :enable_run
+if not exist "%CERT_PEM%" goto :enable_run
+if not exist "%CERT_KEY%" goto :enable_run
+set "MSG1=站点已经在 443，证书文件也还在：不改配置，也不重签证书"
 echo !MSG1!
+call :check_ports
+if errorlevel 1 (
+	set "MSG1=%C_WARN%[警告] 配置已经是 https，但上面的端口被别的程序占着，nginx 可能起不来%C_RST%"
+	echo !MSG1!
+)
+call :report_on
+exit /b 0
+
+REM ===================== helper :enable_run =====================
+:enable_run
+call :state
+set "MSG1=目标：443 https，80 继续监听并只做 301 跳转"
+echo !MSG1!
+REM Ports are probed before anything is written to the trust store, so a busy
+REM 443 or 80 leaves this tool exactly as it found the machine.
+call :check_ports
+if errorlevel 1 exit /b 1
 call :install_ca
 if errorlevel 1 exit /b 1
 call :make_cert
-if errorlevel 1 exit /b 1
-call :check_443
 if errorlevel 1 exit /b 1
 call :switch enable
 if errorlevel 1 exit /b 1
@@ -86,7 +104,7 @@ exit /b 0
 
 REM ===================== renew =====================
 :do_renew
-call :require
+call :require renew
 if errorlevel 1 exit /b 1
 call :install_ca
 if errorlevel 1 exit /b 1
@@ -101,7 +119,7 @@ exit /b 0
 
 REM ===================== disable =====================
 :do_disable
-call :require
+call :require disable
 if errorlevel 1 exit /b 1
 call :state
 call :switch disable
@@ -109,7 +127,7 @@ if errorlevel 1 exit /b 1
 call :verify_nginx
 call :reload_nginx
 echo ==============================================================
-set "MSG1=%C_OK%[√] 已回到 http：站点只监听 80，nginx 不再读取 etc\nginx\ssl%C_RST%"
+set "MSG1=%C_OK%[√] 已回到 http：站点重新监听 80，80 跳转与 ssl.conf 的 include 一并撤销，nginx 不再读取 etc\nginx\ssl%C_RST%"
 echo !MSG1!
 set "MSG1=证书和本地根证书都还在。要一并清掉请运行 bin\make-ssl.bat uninstall"
 echo !MSG1!
@@ -118,7 +136,7 @@ exit /b 0
 
 REM ===================== uninstall =====================
 :do_uninstall
-call :require
+call :require uninstall
 if errorlevel 1 exit /b 1
 call :switch disable
 if errorlevel 1 exit /b 1
@@ -148,33 +166,42 @@ REM ===================== help =====================
 echo ==============================================================
 set "MSG1=用法："
 echo !MSG1!
-set "MSG1=  bin\make-ssl.bat              签发证书并把站点切到 443 https"
+set "MSG1=  bin\make-ssl.bat              签发证书并把站点切到 443 https，80 只做 301 跳转"
 echo !MSG1!
 set "MSG1=  bin\make-ssl.bat renew        只重新签发证书，不改配置"
 echo !MSG1!
-set "MSG1=  bin\make-ssl.bat disable      站点回到 80，证书与根证书保留"
+set "MSG1=  bin\make-ssl.bat disable      站点回到 80 并撤销跳转，证书与根证书保留"
 echo !MSG1!
 set "MSG1=  bin\make-ssl.bat uninstall    回到 80，并移除信任库里的根证书、删除证书文件"
 echo !MSG1!
 set "MSG1=说明："
 echo !MSG1!
-set "MSG1=  1. 本地根证书装进当前用户信任库，不需要管理员权限；Firefox 需重启浏览器"
+set "MSG1=  1. install.bat 末尾会自动执行一次 enable，装完默认就是 https"
 echo !MSG1!
-set "MSG1=  2. 证书域名固定为 localhost、127.0.0.1、::1、*.xqkeji.com"
+set "MSG1=  2. 本地根证书装进当前用户信任库，不需要管理员权限；Firefox 需重启浏览器"
 echo !MSG1!
-set "MSG1=  3. 要访问的子域名请自行写入 hosts，例如 127.0.0.1 crm.xqkeji.com"
+set "MSG1=  3. 证书域名固定为 localhost、127.0.0.1、::1、*.xqkeji.com"
 echo !MSG1!
-set "MSG1=  4. 切到 443 后 start.bat 与 stop.bat 会按 443 检查 nginx，无需另配"
+set "MSG1=  4. 要访问的子域名请自行写入 hosts，例如 127.0.0.1 crm.xqkeji.com"
+echo !MSG1!
+set "MSG1=  5. 切到 443 后 start.bat 与 stop.bat 会按 443 检查 nginx，跳转那份额外配置无需另配"
 echo !MSG1!
 echo ==============================================================
 exit /b 0
 
 REM ===================== helper :require =====================
+REM Args: 1=action. Only enable needs etc\nginx\http_redirect.conf to be there,
+REM because enable is the action that writes an include pointing at it. disable
+REM and uninstall must still run when the file has been edited away, otherwise a
+REM missing 80 snippet would trap the sites on 443 with a config nginx rejects.
 :require
 if exist "%MKCERT%" (
 	if exist "%ENABLE_PS1%" (
 		if exist "%NGINX_DIR%\nginx.conf" (
-			if exist "%NGINX_DIR%\conf.d" exit /b 0
+			if exist "%NGINX_DIR%\conf.d" (
+				if /i not "%~1"=="enable" exit /b 0
+				if exist "%NGINX_DIR%\http_redirect.conf" exit /b 0
+			)
 		)
 	)
 )
@@ -188,13 +215,15 @@ set "MSG1=  缺少 etc\nginx\nginx.conf"
 if not exist "%NGINX_DIR%\nginx.conf" echo !MSG1!
 set "MSG1=  缺少 etc\nginx\conf.d 目录"
 if not exist "%NGINX_DIR%\conf.d" echo !MSG1!
+set "MSG1=  缺少 etc\nginx\http_redirect.conf（80 跳转到 443 的配置片段）"
+if /i "%~1"=="enable" if not exist "%NGINX_DIR%\http_redirect.conf" echo !MSG1!
 exit /b 1
 
 REM ===================== helper :state =====================
 :state
 call "%BIN_DIR%\ssl-util.bat" :https_enabled HTTPS_ON
 if "!HTTPS_ON!"=="1" (
-	set "MSG1=当前：https，nginx 监听 443"
+	set "MSG1=当前：https，站点监听 443，80 只做 301 跳转"
 	echo !MSG1!
 ) else (
 	set "MSG1=当前：http，nginx 监听 80"
@@ -234,20 +263,30 @@ set "CAROOT="
 for /f "delims=" %%c in ('"%MKCERT%" -CAROOT 2^>nul') do set "CAROOT=%%c"
 exit /b 0
 
-REM ===================== helper :check_443 =====================
-REM The config is only rewritten after this passes, so a busy 443 cannot leave
-REM the sites switched over with nginx unable to bind.
-:check_443
+REM ===================== helper :check_ports =====================
+REM The config is only rewritten after this passes, so a busy port cannot leave
+REM the sites switched over with nginx unable to bind. https needs 443 for the
+REM sites and 80 for the redirect block, so both are probed.
+:check_ports
+for %%P in (443 80) do (
+	call :one_port %%P
+	if errorlevel 1 exit /b 1
+)
+exit /b 0
+
+REM ===================== helper :one_port =====================
+REM Args: 1=port to probe
+:one_port
 set "PC_BUSY=0"
 set "PC_PID="
 set "PC_IMG="
 set "PC_SVC=N/A"
-call "%BIN_DIR%\port-util.bat" :port_owner 443 PC_BUSY PC_PID PC_IMG PC_SVC
+call "%BIN_DIR%\port-util.bat" :port_owner %~1 PC_BUSY PC_PID PC_IMG PC_SVC
 if not "!PC_BUSY!"=="1" exit /b 0
 if /i "!PC_IMG!"=="nginx.exe" exit /b 0
-set "MSG1=%C_WARN%[警告] 443 已被 !PC_IMG! 占用（PID=!PC_PID!，服务=!PC_SVC!），配置未改动%C_RST%"
+set "MSG1=%C_WARN%[警告] %~1 端口已被 !PC_IMG! 占用（PID=!PC_PID!，服务=!PC_SVC!），配置未改动%C_RST%"
 echo !MSG1!
-set "MSG1=一般是 IIS 的 W3SVC、Visual Studio 的 IIS Express 或 VMware NAT。停掉后重新运行本工具。"
+set "MSG1=443 一般是 IIS 的 W3SVC、Visual Studio 的 IIS Express 或 VMware NAT；80 一般是本机其他 web 服务。停掉后重新运行本工具。"
 echo !MSG1!
 exit /b 1
 
@@ -314,7 +353,7 @@ exit /b 0
 REM ===================== helper :report_on =====================
 :report_on
 echo ==============================================================
-set "MSG1=%C_OK%[√] 已启用 https：站点从 listen 80 改为 listen 443 ssl%C_RST%"
+set "MSG1=%C_OK%[√] 已启用 https：站点从 listen 80 改为 listen 443 ssl，80 由 http_redirect.conf 做 301 跳转%C_RST%"
 echo !MSG1!
 set "MSG1=证书：etc\nginx\ssl\wnmmp.pem 与 etc\nginx\ssl\wnmmp-key.pem（私钥不入库）"
 echo !MSG1!
@@ -322,7 +361,7 @@ if defined CAROOT set "MSG1=根证书目录：!CAROOT!，其中 rootCA.pem 可�
 if defined CAROOT echo !MSG1!
 set "MSG1=子域名要自己写进 hosts，例如：127.0.0.1 crm.xqkeji.com"
 echo !MSG1!
-set "MSG1=现在可以访问 https://localhost 与 https://crm.xqkeji.com（80 已不再监听）"
+set "MSG1=现在可以访问 https://localhost 与 https://crm.xqkeji.com；http 地址会被 301 跳到同一个 https 地址"
 echo !MSG1!
 echo ==============================================================
 exit /b 0

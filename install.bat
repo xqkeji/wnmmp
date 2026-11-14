@@ -82,6 +82,20 @@ if not "%SKIP_MONGODB%"=="1" call "bin\init-mongodb.bat"
 REM mysql init (skip if mysql was skipped)
 if not "%SKIP_MYSQL%"=="1" call "bin\init-mysql.bat"
 copy nul %TMP_DIR%\install.lock > nul
+REM https is on by default: bin\make-ssl.bat signs the local certificate for
+REM localhost / 127.0.0.1 / *.xqkeji.com, trusts it for the current user, moves
+REM the sites to 443 and leaves 80 as a 301 to https. Re-running install.bat on
+REM an install that is already on 443 is a no-op inside that tool.
+set "MSG1=== 启用 https（签发本地证书，站点切到 443，80 做 301 跳转）==="
+echo !MSG1!
+call "bin\make-ssl.bat"
+if errorlevel 1 (
+	set "MSG1=%C_WARN%[警告] https 未启用，站点继续走 80；按上面的原因处理后，单独运行 bin\make-ssl.bat 即可开启%C_RST%"
+	echo !MSG1!
+	echo %DATE% %TIME% [https] make-ssl.bat did not enable https >> "%TMP_DIR%\install.progress.log"
+) else (
+	echo %DATE% %TIME% [https] enabled by install >> "%TMP_DIR%\install.progress.log"
+)
 set "MSG1=%C_OK%[√] 安装完成！%C_RST%"
 echo !MSG1!
 echo %DATE% %TIME% [bootstrap] vc-redist + downloads + init done >> "%TMP_DIR%\install.progress.log"
