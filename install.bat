@@ -38,8 +38,8 @@ if not defined HOME set "HOME=%TMP_DIR%"
 set DOWNLOAD_DIR=%TMP_DIR%\download
 REM skipped-install record: each line is a component key (nginx / mysql / mongodb / php-cgi)
 set "SKIP_FILE=%TMP_DIR%\skipped.lst"
-REM when bin\make-ssl.bat switched the sites to 443, nginx must be probed on
-REM that port; on a fresh install (no conf.d yet) this reports 80.
+REM the shipped config listens on 443, so a fresh install is probed on 443 too;
+REM after bin\make-ssl.bat disable the sites are back on 80 and so is this probe.
 call bin\ssl-util.bat :nginx_port NGINX_PORT
 
 REM ---- admin (elevation) check: required to stop Windows services ----
@@ -82,15 +82,16 @@ if not "%SKIP_MONGODB%"=="1" call "bin\init-mongodb.bat"
 REM mysql init (skip if mysql was skipped)
 if not "%SKIP_MYSQL%"=="1" call "bin\init-mysql.bat"
 copy nul %TMP_DIR%\install.lock > nul
-REM https is on by default: bin\make-ssl.bat signs the local certificate for
-REM localhost / 127.0.0.1 / *.xqkeji.com, trusts it for the current user, moves
-REM the sites to 443 and leaves 80 as a 301 to https. Re-running install.bat on
-REM an install that is already on 443 is a no-op inside that tool.
-set "MSG1=== 启用 https（签发本地证书，站点切到 443，80 做 301 跳转）==="
+REM The shipped config already listens on 443 and leaves 80 as a 301 to https;
+REM what a fresh download still lacks is a certificate. bin\make-ssl.bat creates
+REM the local CA for the current user and signs it for localhost / 127.0.0.1 /
+REM ::1 / *.xqkeji.com, then runs nginx -t. Without those files nginx cannot
+REM start, so on failure that tool puts the sites back on 80 before exiting.
+set "MSG1=== 签发 https 本地证书（站点出厂就是 443，80 只做 301 跳转）==="
 echo !MSG1!
 call "bin\make-ssl.bat"
 if errorlevel 1 (
-	set "MSG1=%C_WARN%[警告] https 未启用，站点继续走 80；按上面的原因处理后，单独运行 bin\make-ssl.bat 即可开启%C_RST%"
+	set "MSG1=%C_WARN%[警告] https 未就绪，站点按上面的提示退回或留在 80；处理完后单独运行 bin\make-ssl.bat 即可切到 443%C_RST%"
 	echo !MSG1!
 	echo %DATE% %TIME% [https] make-ssl.bat did not enable https >> "%TMP_DIR%\install.progress.log"
 ) else (

@@ -4,6 +4,11 @@
 # so non-ASCII literals in a .ps1 break the parse. bin\make-ssl.bat owns all
 # user-facing text.
 #
+# etc\nginx\nginx.conf and etc\nginx\conf.d\*.conf SHIP in the enabled shape
+# below, so on a fresh install "enable" finds nothing to rewrite and only the
+# certificate step has to run; "disable" is the direction that actually edits,
+# and it puts back exactly the plain-HTTP config earlier releases shipped with.
+#
 # The certificate directives live in etc\nginx\ssl.conf and the port-80 redirect
 # lives in etc\nginx\http_redirect.conf; both are included ONCE at http level,
 # so a server block never carries them and a block with two listen lines

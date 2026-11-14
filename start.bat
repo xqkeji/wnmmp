@@ -34,9 +34,10 @@ set TMP_DIR=%HOME_DIR%\tmp
 set INSTALL_FILE=%TMP_DIR%\install.lock
 REM skipped-install record (each line: nginx / mysql / mongodb / php-cgi)
 set "SKIP_FILE=%TMP_DIR%\skipped.lst"
-REM nginx listens on 443 once bin\make-ssl.bat switched the sites over, so the
-REM nginx health check below uses that port instead of a hard-coded 80.
+REM the shipped config already listens on 443, so the nginx health check below
+REM uses that port; after bin\make-ssl.bat disable it reads back 80 by itself.
 call bin\ssl-util.bat :nginx_port NGINX_PORT
+call bin\ssl-util.bat :https_enabled HTTPS_ON
 
 if not exist "%INSTALL_FILE%" (
     echo "请先运行 install.bat！"
@@ -92,6 +93,12 @@ if not errorlevel 1 (
 	set "MSG1=%C_SKIP%[×] [skip] nginx：已在跳过清单，不启动%C_RST%"
 	echo !MSG1!
 ) else (
+	REM ssl.conf reads the pair below from etc\nginx\ssl, which the repository
+	REM does not carry; without them nginx exits at once, so name the fix.
+	if "!HTTPS_ON!"=="1" if not exist "%HOME_DIR%\etc\nginx\ssl\wnmmp.pem" (
+		set "MSG1=%C_WARN%[警告] etc\nginx\ssl 里没有证书，nginx 会起不来；先运行 bin\make-ssl.bat 签发%C_RST%"
+		echo !MSG1!
+	)
 	call :start_svc nginx.exe "Nginx" "nginx.exe -p %HOME_DIR%\ -c %HOME_DIR%\etc\nginx\nginx.conf" !NGINX_PORT!
 )
 

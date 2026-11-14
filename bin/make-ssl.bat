@@ -79,16 +79,17 @@ exit /b 0
 REM ===================== helper :enable_run =====================
 :enable_run
 call :state
-set "MSG1=目标：443 https，80 继续监听并只做 301 跳转"
+set "MSG1=目标：443 https，80 只做 301 跳转"
 echo !MSG1!
 REM Ports are probed before anything is written to the trust store, so a busy
-REM 443 or 80 leaves this tool exactly as it found the machine.
+REM 443 or 80 cannot leave a half-installed CA behind. :fallback then decides
+REM whether the config has to come back to 80 to keep nginx startable.
 call :check_ports
-if errorlevel 1 exit /b 1
+if errorlevel 1 goto :fallback
 call :install_ca
-if errorlevel 1 exit /b 1
+if errorlevel 1 goto :fallback
 call :make_cert
-if errorlevel 1 exit /b 1
+if errorlevel 1 goto :fallback
 call :switch enable
 if errorlevel 1 exit /b 1
 call :verify_nginx
@@ -101,6 +102,24 @@ if errorlevel 1 (
 call :reload_nginx
 call :report_on
 exit /b 0
+
+REM ===================== helper :fallback =====================
+REM Any enable step that cannot finish lands here. The config that ships with
+REM wnmmp already listens on 443 and includes ssl.conf, so with no certificate in
+REM etc\nginx\ssl nginx cannot start at all: the sites are put back on 80 so the
+REM install still serves something over http. When the certificate files ARE
+REM there the config is left alone - dropping a working 443 to 80 because a
+REM re-sign or a port probe failed would be worse than the failure itself.
+REM The actual cause is whatever the failing step printed above.
+:fallback
+if exist "%CERT_PEM%" if exist "%CERT_KEY%" exit /b 1
+call :switch disable
+call :verify_nginx
+set "MSG1=%C_WARN%[警告] https 未就绪，配置已退回 80（http 可用，若 80 也被占用请先停掉占用程序）%C_RST%"
+echo !MSG1!
+set "MSG1=处理完上面的原因后重新运行 bin\make-ssl.bat 即可切回 443 https"
+echo !MSG1!
+exit /b 1
 
 REM ===================== renew =====================
 :do_renew
@@ -166,7 +185,7 @@ REM ===================== help =====================
 echo ==============================================================
 set "MSG1=用法："
 echo !MSG1!
-set "MSG1=  bin\make-ssl.bat              签发证书并把站点切到 443 https，80 只做 301 跳转"
+set "MSG1=  bin\make-ssl.bat              签发本地证书，确保站点在 443 https（80 只做 301 跳转）"
 echo !MSG1!
 set "MSG1=  bin\make-ssl.bat renew        只重新签发证书，不改配置"
 echo !MSG1!
@@ -176,15 +195,17 @@ set "MSG1=  bin\make-ssl.bat uninstall    回到 80，并移除信任库里的�
 echo !MSG1!
 set "MSG1=说明："
 echo !MSG1!
-set "MSG1=  1. install.bat 末尾会自动执行一次 enable，装完默认就是 https"
+set "MSG1=  1. 配置文件出厂就是 443，证书要现签：install.bat 末尾会自动跑一次本工具"
 echo !MSG1!
-set "MSG1=  2. 本地根证书装进当前用户信任库，不需要管理员权限；Firefox 需重启浏览器"
+set "MSG1=  2. 没有 etc\nginx\ssl 里的证书，nginx 会直接起不来；签失败本工具会把配置退回 80"
 echo !MSG1!
-set "MSG1=  3. 证书域名固定为 localhost、127.0.0.1、::1、*.xqkeji.com"
+set "MSG1=  3. 本地根证书装进当前用户信任库，不需要管理员权限；Firefox 需重启浏览器"
 echo !MSG1!
-set "MSG1=  4. 要访问的子域名请自行写入 hosts，例如 127.0.0.1 crm.xqkeji.com"
+set "MSG1=  4. 证书域名固定为 localhost、127.0.0.1、::1、*.xqkeji.com"
 echo !MSG1!
-set "MSG1=  5. 切到 443 后 start.bat 与 stop.bat 会按 443 检查 nginx，跳转那份额外配置无需另配"
+set "MSG1=  5. 要访问的子域名请自行写入 hosts，例如 127.0.0.1 crm.xqkeji.com"
+echo !MSG1!
+set "MSG1=  6. start.bat 与 stop.bat 会自己按 443 或 80 检查 nginx，跳转配置无需另配"
 echo !MSG1!
 echo ==============================================================
 exit /b 0
@@ -223,12 +244,22 @@ REM ===================== helper :state =====================
 :state
 call "%BIN_DIR%\ssl-util.bat" :https_enabled HTTPS_ON
 if "!HTTPS_ON!"=="1" (
-	set "MSG1=当前：https，站点监听 443，80 只做 301 跳转"
+	if exist "%CERT_PEM%" (
+		if exist "%CERT_KEY%" (
+			set "MSG1=当前：https，站点监听 443，80 只做 301 跳转"
+			echo !MSG1!
+			exit /b 0
+		)
+	)
+	REM The config is https but the certificate files are gone, which is exactly
+	REM the state where nginx refuses to start; saying so beats reporting a switch
+	REM that is already in place.
+	set "MSG1=当前：配置是 443，但 etc\nginx\ssl 里还没有证书，nginx 起不来"
 	echo !MSG1!
-) else (
-	set "MSG1=当前：http，nginx 监听 80"
-	echo !MSG1!
+	exit /b 0
 )
+set "MSG1=当前：http，nginx 监听 80"
+echo !MSG1!
 exit /b 0
 
 REM ===================== helper :install_ca =====================
@@ -284,7 +315,7 @@ set "PC_SVC=N/A"
 call "%BIN_DIR%\port-util.bat" :port_owner %~1 PC_BUSY PC_PID PC_IMG PC_SVC
 if not "!PC_BUSY!"=="1" exit /b 0
 if /i "!PC_IMG!"=="nginx.exe" exit /b 0
-set "MSG1=%C_WARN%[警告] %~1 端口已被 !PC_IMG! 占用（PID=!PC_PID!，服务=!PC_SVC!），配置未改动%C_RST%"
+set "MSG1=%C_WARN%[警告] %~1 端口已被 !PC_IMG! 占用（PID=!PC_PID!，服务=!PC_SVC!）%C_RST%"
 echo !MSG1!
 set "MSG1=443 一般是 IIS 的 W3SVC、Visual Studio 的 IIS Express 或 VMware NAT；80 一般是本机其他 web 服务。停掉后重新运行本工具。"
 echo !MSG1!
@@ -353,7 +384,7 @@ exit /b 0
 REM ===================== helper :report_on =====================
 :report_on
 echo ==============================================================
-set "MSG1=%C_OK%[√] 已启用 https：站点从 listen 80 改为 listen 443 ssl，80 由 http_redirect.conf 做 301 跳转%C_RST%"
+set "MSG1=%C_OK%[√] https 就绪：站点在 443，80 由 http_redirect.conf 做 301 跳转%C_RST%"
 echo !MSG1!
 set "MSG1=证书：etc\nginx\ssl\wnmmp.pem 与 etc\nginx\ssl\wnmmp-key.pem（私钥不入库）"
 echo !MSG1!
