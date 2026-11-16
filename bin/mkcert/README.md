@@ -25,7 +25,7 @@ future copy can be checked against it; it is not published by upstream.
 
 `bin\make-ssl.bat` is the front end. It runs `mkcert -install` once, then
 requests a certificate whose Subject Alternative Names cover `localhost`,
-`127.0.0.1`, `::1` and `*.xqkeji.com`, and writes the PEM pair into
+`127.0.0.1`, `::1` and `*.xqkeji.dev`, and writes the PEM pair into
 `etc\nginx\ssl\` (not tracked by git - the private key belongs to one machine
 only).
 The CA itself stays where mkcert keeps it, by default

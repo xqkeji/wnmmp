@@ -2,17 +2,19 @@
 chcp 65001 >nul
 REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao
-REM Licensed under the Apache License, Version 2.0 (the "License");
-REM you may not use this file except in compliance with the License.
-REM You may obtain a copy of the License at
+REM This program is free software: you can redistribute it and/or modify
+REM it under the terms of the GNU Affero General Public License as
+REM published by the Free Software Foundation, version 3 only.
+REM SPDX-License-Identifier: AGPL-3.0-only
 REM
-REM     http://www.apache.org/licenses/LICENSE-2.0
+REM This program is distributed in the hope that it will be useful, but
+REM WITHOUT ANY WARRANTY; without even the implied warranty of
+REM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+REM Affero General Public License for more details.
 REM
-REM Unless required by applicable law or agreed to in writing, software
-REM distributed under the License is distributed on an "AS IS" BASIS,
-REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-REM See the License for the specific language governing permissions and
-REM limitations under the License.
+REM You should have received a copy of the GNU Affero General Public
+REM License along with this program. If not, see
+REM     https://www.gnu.org/licenses/
 setlocal enabledelayedexpansion
 
 set "MYSQL_PATH=%HOME_DIR%\mysql\bin\mysqld.exe"

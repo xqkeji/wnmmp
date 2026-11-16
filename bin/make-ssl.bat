@@ -2,17 +2,19 @@
 chcp 65001 >nul
 REM Copyright (c) xqkeji.cn. All rights reserved.
 REM Author: Zhang Wenhao
-REM Licensed under the Apache License, Version 2.0 (the "License");
-REM you may not use this file except in compliance with the License.
-REM You may obtain a copy of the License at
+REM This program is free software: you can redistribute it and/or modify
+REM it under the terms of the GNU Affero General Public License as
+REM published by the Free Software Foundation, version 3 only.
+REM SPDX-License-Identifier: AGPL-3.0-only
 REM
-REM     http://www.apache.org/licenses/LICENSE-2.0
+REM This program is distributed in the hope that it will be useful, but
+REM WITHOUT ANY WARRANTY; without even the implied warranty of
+REM MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+REM Affero General Public License for more details.
 REM
-REM Unless required by applicable law or agreed to in writing, software
-REM distributed under the License is distributed on an "AS IS" BASIS,
-REM WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-REM See the License for the specific language governing permissions and
-REM limitations under the License.
+REM You should have received a copy of the GNU Affero General Public
+REM License along with this program. If not, see
+REM     https://www.gnu.org/licenses/
 setlocal enabledelayedexpansion
 
 REM ---- ANSI status colours:
@@ -36,9 +38,9 @@ set "ENABLE_PS1=%BIN_DIR%\ssl-enable.ps1"
 set "NGINX_EXE=%HOME_DIR%\nginx\nginx.exe"
 set "CERT_PEM=%SSL_DIR%\wnmmp.pem"
 set "CERT_KEY=%SSL_DIR%\wnmmp-key.pem"
-REM Names the certificate is issued for. *.xqkeji.com is one label deep, which is
-REM how the local hosts entries (crm.xqkeji.com and friends) resolve.
-set "CERT_HOSTS=localhost 127.0.0.1 ::1 *.xqkeji.com"
+REM Names the certificate is issued for. *.xqkeji.dev is one label deep, which is
+REM how the local hosts entries (crm.xqkeji.dev and friends) resolve.
+set "CERT_HOSTS=localhost 127.0.0.1 ::1 *.xqkeji.dev"
 
 echo ==============================================================
 set "MSG1= WNMMP https：本地证书签发（bin\mkcert.exe）与 nginx 443 开关"
@@ -201,9 +203,9 @@ set "MSG1=  2. 没有 etc\nginx\ssl 里的证书，nginx 会直接起不来；�
 echo !MSG1!
 set "MSG1=  3. 本地根证书装进当前用户信任库，不需要管理员权限；Firefox 需重启浏览器"
 echo !MSG1!
-set "MSG1=  4. 证书域名固定为 localhost、127.0.0.1、::1、*.xqkeji.com"
+set "MSG1=  4. 证书域名固定为 localhost、127.0.0.1、::1、*.xqkeji.dev"
 echo !MSG1!
-set "MSG1=  5. 要访问的子域名请自行写入 hosts，例如 127.0.0.1 crm.xqkeji.com"
+set "MSG1=  5. 要访问的子域名请自行写入 hosts，例如 127.0.0.1 crm.xqkeji.dev"
 echo !MSG1!
 set "MSG1=  6. start.bat 与 stop.bat 会自己按 443 或 80 检查 nginx，跳转配置无需另配"
 echo !MSG1!
@@ -390,9 +392,9 @@ set "MSG1=证书：etc\nginx\ssl\wnmmp.pem 与 etc\nginx\ssl\wnmmp-key.pem（私
 echo !MSG1!
 if defined CAROOT set "MSG1=根证书目录：!CAROOT!，其中 rootCA.pem 可作为 curl.cainfo 或 PHP 的 openssl.cafile"
 if defined CAROOT echo !MSG1!
-set "MSG1=子域名要自己写进 hosts，例如：127.0.0.1 crm.xqkeji.com"
+set "MSG1=子域名要自己写进 hosts，例如：127.0.0.1 crm.xqkeji.dev"
 echo !MSG1!
-set "MSG1=现在可以访问 https://localhost 与 https://crm.xqkeji.com；http 地址会被 301 跳到同一个 https 地址"
+set "MSG1=现在可以访问 https://localhost 与 https://crm.xqkeji.dev；http 地址会被 301 跳到同一个 https 地址"
 echo !MSG1!
 echo ==============================================================
 exit /b 0
