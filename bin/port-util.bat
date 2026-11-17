@@ -24,6 +24,10 @@ REM       sets OUT_IMAGE=image.exe, OUT_SERVICE=service name or N/A
 REM   call bin\port-util.bat :port_owner PORT OUT_BUSY OUT_PID OUT_IMAGE OUT_SERVICE
 REM       sets OUT_BUSY=1 and fills pid/image/service when that port is
 REM       LISTENING, otherwise OUT_BUSY=0
+REM   call bin\port-util.bat :port_owner_snap SNAPSHOT_FILE PORT OUT_BUSY OUT_PID OUT_IMAGE OUT_SERVICE
+REM       same, but answered from a file the caller captured with
+REM       "netstat -ano | findstr LISTENING", for a caller that probes
+REM       several ports and wants to pay for one netstat
 REM -------------------------------------------------------------
 
 REM ===================== helper :pid_lookup =====================
@@ -67,4 +71,27 @@ for /f "tokens=5" %%P in ('netstat -ano 2^>nul ^| findstr /c:":%~1 " ^| findstr 
 if "!%~2!"=="1" (
 	if not "!%~3!"=="" call :pid_lookup "!%~3!" "%~4" "%~5"
 )
+goto :eof
+
+REM ===================== helper :port_owner_snap =====================
+REM Args: 1=snapshot file  2=port  3=out busy  4=out pid  5=out image  6=out service
+REM Same answer as :port_owner, taken from a netstat capture the caller made
+REM once, so a caller that probes several ports pays one netstat instead of one
+REM per port. cmd.exe starts a new process for every netstat, which is where the
+REM seconds went. A missing or empty capture reports the port free, which is the
+REM true reading of a capture taken while nothing was listening. Recapture after
+REM any action that could have changed port ownership.
+:port_owner_snap
+set "%~3=0"
+set "%~4="
+set "%~5="
+set "%~6=N/A"
+if not exist "%~1" goto :eof
+for /f "tokens=5" %%p in ('findstr /c:":%~2 " "%~1" 2^>nul ^| findstr "LISTENING"') do (
+	set "%~3=1"
+	set "%~4=%%p"
+)
+if not "!%~3!"=="1" goto :eof
+if "!%~4!"=="" goto :eof
+call :pid_lookup "!%~4!" "%~5" "%~6"
 goto :eof
