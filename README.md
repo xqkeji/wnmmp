@@ -67,13 +67,21 @@ wnmmp 提供了一系列脚本和工具来管理服务和组件。以下是主�
 #### 启用 HTTPS
 - 站点配置出厂就是 https：`etc\nginx\conf.d\*.conf` 是 `listen 443 ssl`，`etc\nginx\nginx.conf` 的 http 层带着 `include ssl.conf;` 与 `include http_redirect.conf;`。仓库里不含证书，所以**没跑过证书这步之前 nginx 起不来**（`nginx -t` 会报加载证书失败）。
 - `install.bat` 的最后一步会自动运行一次 `bin\make-ssl.bat`：用自带的 `bin\mkcert.exe`（BSD-3-Clause，已随包放在 bin 目录，不需要联网下载）创建本地根证书并装入**当前用户**信任库（不需要管理员权限），签发 `etc\nginx\ssl\wnmmp.pem` / `etc\nginx\ssl\wnmmp-key.pem`，再跑 `nginx -t` 自检。手工执行同一个命令即可，证书已在位时不改配置、也不重签。
-- 证书签发给 `localhost`、`127.0.0.1`、`::1`、`*.xqkeji.dev`（通配符只有一级，正好覆盖 `crm.xqkeji.dev` 这类本地域名）。`*.xqkeji.dev` 的子域名需要自己写进 hosts，例如 `127.0.0.1 crm.xqkeji.dev`。
+- 证书签发给 `localhost`、`127.0.0.1`、`::1`、`*.xqkeji.dev`（通配符只有一级，正好覆盖 `crm.xqkeji.dev` 这类本地域名）。`*.xqkeji.dev` 的子域名用 `bin\add-site.bat` 自动登记（nginx 配置 + hosts + 重载），见下面「新增本地站点」。
 - 443 提供 https，80 只负责跳转：`etc\nginx\http_redirect.conf` 把 http 请求 301 到 `https://$host$request_uri`，即同一个域名同一个路径，不再有明文访问。`start.bat`、`stop.bat`、`install.bat` 会自己识别当前是 443 还是 80，不用改端口配置。
 - 切换前先探测 443 和 80：占用者不是 nginx 就拒绝继续，并指明是哪个程序（IIS 的 W3SVC、IIS Express、VMware NAT 或其他 web 服务），停掉后重新运行即可；占用者是 nginx 则放行——`install.bat` 开头本来就会先停掉所有 nginx。同时跑着另一份 wnmmp 时两份会互相抢 80，先在那一份里 `bin\make-ssl.bat disable` 或者直接停掉它。
 - 证书签不出来（或端口探测失败）且 `etc\nginx\ssl` 里确实没有证书时，`bin\make-ssl.bat` 会自动把配置退回 80 并说明原因，保证站点还能用 http 访问；处理完再运行一次就回到 443。
 - `bin\make-ssl.bat renew` 只重新签发证书，不动配置；`disable` 让站点回到 80（两行 include 含 80 跳转一并撤销，就是本仓库改动之前的那份配置），证书保留；`uninstall` 回到 80 并从信任库移除根证书、删除 `etc\nginx\ssl` 里的证书文件。
 - Firefox 用自己独立的证书库，装完根证书要重启浏览器才生效；命令行 curl、PHP 的 `openssl_verify` 读不到系统信任库，需要把 mkcert 输出提示的根证书目录（默认 `%LOCALAPPDATA%\mkcert`）里的 `rootCA.pem` 配给 `curl.cainfo` / `openssl.cafile`。
 
+
+#### 新增本地站点
+- `bin\add-site.bat <name> [project-dir]` 一条命令登记一个本地站点：生成 `etc\nginx\conf.d\<name>.conf`（443 ssl、`server_name <name>.xqkeji.dev`、root 指向项目的 `www` 目录、`fastcgi_pass php_processes`、带 `include php_no_exec.conf;`），往 hosts 追加 `127.0.0.1 <name>.xqkeji.dev`，`nginx -t` 通过后 `nginx -s reload`，不用 stop/start。
+- `project-dir` 省略时取 `www\<name>`；站点入口目录必须是 `<project-dir>\www`，不存在就报错，不写任何配置。例：`bin\add-site.bat crm`、`bin\add-site.bat crm "D:\wnmmp\www\default\crm"`。
+- **幂等**：`<name>.conf` 已存在、或 `<name>.xqkeji.dev` 已被 `conf.d` 里其它配置使用，就跳过生成；hosts 里已有该域名（大小写不同、与其它域名写在同一行都算已有）就跳过追加。重复执行不会覆盖手工改过的配置。
+- 写 hosts 需要管理员权限：脚本先直接尝试，被拒绝就弹一次 UAC 提权重试；仍失败会提示手工加那一行，已生成的 nginx 配置不受影响。
+- `nginx -t` 不通过时会删掉刚生成的配置再报错，原有站点不受影响；还没签证书时只提示先跑 `bin\make-ssl.bat enable`。
+- fast-admin 用 `composer create-project` 建项目时会自动向上找到本脚本并执行，不需要手工跑。
 
 #### 注意事项
 - 修改配置文件后，需重启对应服务以生效。
