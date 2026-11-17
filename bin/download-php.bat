@@ -174,16 +174,22 @@ goto :eof
 
 
 REM ===================== helper :install_xqkeji =====================
-REM xqkeji is a custom gitee extension whose prebuilt DLL is PHP-version
-REM specific: the gitee tag names the target PHP in its -phpMM suffix
-REM (e.g. v1.1.2-php8.5). The tag is declared in wnmmp.ini (key: xqkeji) and
-REM arrives here as CFG_xqkeji via download-ini.bat, so NOTHING probes the
-REM network. The old :xqkeji_detect (gitee tags API) was removed: gitee rate
-REM limits anonymous calls, and a failed probe used to leave an EMPTY tag
-REM which then built a URL with no tag in it and 404'd.
+REM xqkeji is a custom extension whose prebuilt DLL is PHP-version specific.
+REM It comes from a tag SOURCE archive/clone, which carries php_xqkeji.dll,
+REM xqkeji.so, LICENSE.md and NOTICES together. Tags are plain versions
+REM (v1.2.2): the target PHP minor is declared by the repo's Dockerfile ARG
+REM PHP_BRANCH, NOT by a -phpMM tag suffix. The tag is declared in wnmmp.ini
+REM (key: xqkeji) and arrives here as CFG_xqkeji via download-ini.bat, so
+REM NOTHING probes the network for a version. Three sources are tried in order:
+REM gitcode archive -> gitcode git clone -> GitHub archive (see the ladder below
+REM for why the archive alone is not enough). The old :xqkeji_detect (gitee tags
+REM API) was removed: gitee rate limits anonymous calls, a failed probe used to
+REM leave an EMPTY tag which then built a URL with no tag in it and 404'd, and
+REM gitee no longer carries the current tags at all.
 REM
-REM PHP_MM comes from the ACTUALLY installed php.exe (see main flow), so a
-REM tag/PHP mismatch is reported before downloading.
+REM PHP_MM comes from the ACTUALLY installed php.exe (see main flow). A legacy
+REM -phpMM tag that disagrees with it is still reported before downloading;
+REM a plain tag carries no PHP minor, so there is nothing to compare.
 :install_xqkeji
 echo [php] ===^> step: xqkeji
 if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
@@ -192,9 +198,12 @@ if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
 )
 if "%CFG_xqkeji%"=="" goto xqkeji_nourl
 set "XQ_TAG=%CFG_xqkeji%"
-set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%XQ_TAG%.zip"
+REM Last-resort source only: rungs 1-2 below use the gitcode URLs inline.
+set "PHP_XQKEJI_DOWNLOAD_URL=https://github.com/xqkeji/php-xqkeji/archive/refs/tags/%XQ_TAG%.zip"
 set "MSG1=[php] xqkeji 标签 = %XQ_TAG% (wnmmp.ini, php %PHP_MM%)"
 echo !MSG1!
+echo %XQ_TAG%| findstr /i /c:"-php" >nul
+if errorlevel 1 goto xqkeji_tag_ok
 echo %XQ_TAG%| findstr /i /c:"-php%PHP_MM%" >nul
 if not errorlevel 1 goto xqkeji_tag_ok
 set "MSG1=[WARN] xqkeji 标签 %XQ_TAG% 与已安装 PHP %PHP_MM% 不匹配"
@@ -210,27 +219,70 @@ REM ----
 REM ----
 REM ----
 :xqkeji_tag_ok
-echo [php] downloading xqkeji ^(gitee^)...
-wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -c -O "%TMP_DIR%\download\php-xqkeji.zip" "%PHP_XQKEJI_DOWNLOAD_URL%"
-if not "!errorlevel!"=="0" goto xqkeji_failed
-if not exist "%TMP_DIR%\download\php-xqkeji.zip" goto xqkeji_failed
-if exist "%TMP_DIR%\download\php-xqkeji" rd /s /q "%TMP_DIR%\download\php-xqkeji" 2>nul
-unzip -o "%TMP_DIR%\download\php-xqkeji.zip" -d "%TMP_DIR%\download\php-xqkeji"
-REM IMPORTANT: the gitee archive nests the DLL one level deep under a versioned
-REM folder (php-xqkeji-<tag>/php_xqkeji.dll). `for /r` with a LITERAL filename
-REM does NOT recurse into that subfolder, so we use a WILDCARD mask which
-REM forces full recursion and reliably finds the DLL at any depth.
+REM ---- source ladder: gitcode first, GitHub last. Every rung downloads a ZIP
+REM ---- and extracts with the bundled unzip.exe, so nothing depends on tar.exe
+REM ---- being present in Windows. gitcode has two channels that behave very
+REM ---- differently:
+REM ----   1) archive (raw.gitcode.com) is the same URL the site's "download zip"
+REM ----      button uses: /archive/refs/heads/<ref>.zip. It is served by a queue
+REM ----      that answers scripts with an HTML page (anti-bot SPA, or a redirect
+REM ----      to gitcode.com/download-error "queue busy, retry in 30s"). wget can
+REM ----      therefore exit 0 and still have written HTML, NOT a package -- only
+REM ----      "DLL found after extraction" counts as success.
+REM ----   2) git clone (smart HTTP) does not pass that queue/WAF and works on
+REM ----      machines where the archive is blocked, yielding identical bytes.
+REM ---- No -c on these downloads: resuming is only meaningful for the SAME url
+REM ---- and each rung writes its own file; -O truncates, so a leftover body from
+REM ---- a previous run can never be appended to.
 set "FOUND_DLL="
-for /r "%TMP_DIR%\download\php-xqkeji" %%d in (*php_xqkeji.dll) do (
-	if not defined FOUND_DLL set "FOUND_DLL=%%d"
+set "XQ_SRC="
+set "XQ_DIR_TMP=%TMP_DIR%\download\php-xqkeji"
+echo [php] xqkeji source 1/3: gitcode zip archive
+wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -O "%TMP_DIR%\download\php-xqkeji-gitcode.zip" "https://raw.gitcode.com/xqkeji/php-xqkeji/archive/refs/heads/%XQ_TAG%.zip"
+if exist "%TMP_DIR%\download\php-xqkeji-gitcode.zip" (
+	if exist "%XQ_DIR_TMP%" rd /s /q "%XQ_DIR_TMP%" 2>nul
+	mkdir "%XQ_DIR_TMP%" 2>nul
+	unzip -o "%TMP_DIR%\download\php-xqkeji-gitcode.zip" -d "%XQ_DIR_TMP%" >nul 2>&1
+	call :xqkeji_find_dll
+	if defined FOUND_DLL set "XQ_SRC=gitcode-archive"
 )
-if not defined FOUND_DLL goto xqkeji_dllmiss
+if not defined FOUND_DLL (
+	echo [php] xqkeji source 2/3: gitcode git clone
+	where git >nul 2>&1
+	if not errorlevel 1 (
+		if exist "%XQ_DIR_TMP%" rd /s /q "%XQ_DIR_TMP%" 2>nul
+		git -c advice.detachedHead=false clone --quiet --depth 1 --branch %XQ_TAG% https://gitcode.com/xqkeji/php-xqkeji.git "%XQ_DIR_TMP%"
+		call :xqkeji_find_dll
+		if defined FOUND_DLL set "XQ_SRC=gitcode-clone"
+	) else (
+		echo [php] git not found, skip gitcode clone
+	)
+)
+if not defined FOUND_DLL (
+	echo [php] xqkeji source 3/3: github archive
+	wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config -O "%TMP_DIR%\download\php-xqkeji.zip" "%PHP_XQKEJI_DOWNLOAD_URL%"
+	if exist "%TMP_DIR%\download\php-xqkeji.zip" (
+		if exist "%XQ_DIR_TMP%" rd /s /q "%XQ_DIR_TMP%" 2>nul
+		mkdir "%XQ_DIR_TMP%" 2>nul
+		unzip -o "%TMP_DIR%\download\php-xqkeji.zip" -d "%XQ_DIR_TMP%"
+		call :xqkeji_find_dll
+		if defined FOUND_DLL set "XQ_SRC=github-archive"
+	)
+)
+if not defined FOUND_DLL goto xqkeji_failed
+set "MSG1=[php] xqkeji %XQ_TAG% source = !XQ_SRC!"
+echo !MSG1!
+REM IMPORTANT: the archives nest the DLL one level deep under a versioned folder
+REM (gitcode keeps the tag's leading v, GitHub strips it; a clone puts it at the
+REM top). `for /r` with a LITERAL filename does NOT recurse into that subfolder,
+REM so :xqkeji_find_dll uses a WILDCARD mask which forces full recursion and
+REM reliably finds the DLL at any depth.
 copy "%FOUND_DLL%" "%PHP_EXT_DIR%" /Y >nul 2>nul
 REM Carry php-xqkeji's license files alongside the DLL (dual-license / proprietary).
 REM They ship in the same versioned folder as the DLL; copy them best-effort so the
 REM binary distribution always includes LICENSE.md + NOTICES (must not be removed).
 set "XQ_DIR="
-for %%p in ("%FOUND_DLL%") do set "XQ_DIR=%%~dpP"
+for %%p in ("%FOUND_DLL%") do set "XQ_DIR=%%~dpp"
 if exist "%XQ_DIR%LICENSE.md" copy "%XQ_DIR%LICENSE.md" "%PHP_EXT_DIR%" /Y >nul 2>nul
 if exist "%XQ_DIR%NOTICES" copy "%XQ_DIR%NOTICES" "%PHP_EXT_DIR%" /Y >nul 2>nul
 if exist "%PHP_EXT_DIR%\LICENSE.md" (
@@ -242,15 +294,18 @@ if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
 	echo %DATE% %TIME% [php] xqkeji installed（%XQ_TAG%） >> "%TMP_DIR%\install.progress.log"
 	goto :eof
 )
-:xqkeji_dllmiss
-set "MSG1=[ERROR] php_xqkeji 解压后未找到 php_xqkeji.dll，该扩展未安装。"
-echo !MSG1!
-echo %DATE% %TIME% [php] xqkeji FAILED (dll missing) >> "%TMP_DIR%\install.errors.log"
-goto xqkeji_disable
+REM ---- keep the lines above this label 100% ASCII: cmd.exe locates a
+REM ---- CALL/GOTO target label by byte offset inside a UTF-8 batch file,
+REM ---- and the Chinese text elsewhere in this file makes that offset
+REM ---- drift, so execution can land a few lines ABOVE the label. Whatever
+REM ---- sits there then runs, so it has to stay a harmless ASCII remark.
+REM ----
+REM ----
+REM ----
 :xqkeji_failed
-set "MSG1=[ERROR] php_xqkeji 下载失败！该扩展未安装。"
+set "MSG1=[ERROR] php_xqkeji 三个源（gitcode 归档 / gitcode 克隆 / GitHub 归档）都未取到 DLL，该扩展未安装。"
 echo !MSG1!
-echo %DATE% %TIME% [php] xqkeji FAILED (download) >> "%TMP_DIR%\install.errors.log"
+echo %DATE% %TIME% [php] xqkeji FAILED (all sources) >> "%TMP_DIR%\install.errors.log"
 goto xqkeji_disable
 :xqkeji_nourl
 set "MSG1=[ERROR] php_xqkeji 未配置下载地址，跳过。"
@@ -315,5 +370,21 @@ if errorlevel 1 (
 ) else (
 	set "MSG1=[php] %EN_NAME% 启用行已存在，skip"
 	echo !MSG1!
+)
+goto :eof
+
+
+REM ===================== helper :xqkeji_find_dll =====================
+REM Sets FOUND_DLL to the first php_xqkeji.dll anywhere under XQ_DIR_TMP.
+REM Shared by all three download rungs, so each of them is judged by the same
+REM criterion: a DLL actually on disk. An archive that downloaded fine but is
+REM really an anti-bot HTML page simply extracts nothing and leaves FOUND_DLL
+REM undefined, which sends the caller to the next rung.
+REM ---- keep the lines above this label 100% ASCII (see :xqkeji_tag_ok).
+REM ----
+REM ----
+:xqkeji_find_dll
+for /r "%XQ_DIR_TMP%" %%d in (*php_xqkeji.dll) do (
+	if not defined FOUND_DLL set "FOUND_DLL=%%d"
 )
 goto :eof

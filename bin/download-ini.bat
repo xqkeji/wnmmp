@@ -102,9 +102,13 @@ REM ---------------------------------------------------------------------------
 set "PHP_DOWNLOAD_URL=https://windows.php.net/downloads/releases/archives/php-%CFG_php%-nts-Win32-vs17-x64.zip"
 
 REM ---------------------------------------------------------------------------
-REM xqkeji extension (gitee). The tag doubles as the version, e.g. v1.1.2-php8.5
+REM xqkeji extension. Tags are plain versions, e.g. v1.2.2; the target PHP minor
+REM is the repo's Dockerfile ARG PHP_BRANCH, not a -phpMM tag suffix. gitee no
+REM longer carries the current tags (archive 404), so bin/download-php.bat tries
+REM gitcode first (archive, then git clone) and only falls back to this GitHub
+REM archive. This URL is that last-resort rung.
 REM ---------------------------------------------------------------------------
-set "PHP_XQKEJI_DOWNLOAD_URL=https://gitee.com/xqkeji/php-xqkeji/repository/archive/%CFG_xqkeji%.zip"
+set "PHP_XQKEJI_DOWNLOAD_URL=https://github.com/xqkeji/php-xqkeji/archive/refs/tags/%CFG_xqkeji%.zip"
 set "PHP_XQKEJI_ZIP_DIR=php-xqkeji-%CFG_xqkeji%"
 
 goto :eof
