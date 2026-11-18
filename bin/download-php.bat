@@ -129,10 +129,17 @@ set "FB_DLL=%~2"
 set "FB_VER=%~3"
 set "FB_ZIP=%~4"
 set "FB_KIND=%~5"
-if exist "%PHP_EXT_DIR%\%FB_DLL%" (
+REM Skip only when the DLL is present AND the version php.exe reports for it
+REM equals the pin. Existence alone would keep a DLL from an older wnmmp
+REM forever, so raising the pin in wnmmp.ini never reached the machine.
+REM The mismatch notice spells out "but pin is" rather than using !=: under
+REM delayed expansion cmd reads those bangs as variable delimiters and eats them.
+if exist "%PHP_EXT_DIR%\%FB_DLL%" call :ext_version %FB_EXT%
+if exist "%PHP_EXT_DIR%\%FB_DLL%" if "!EXT_VER!"=="%FB_VER%" (
 	echo [php] %FB_EXT% already present, skip
 	goto :eof
 )
+if exist "%PHP_EXT_DIR%\%FB_DLL%" echo [php] %FB_EXT% installed version [!EXT_VER!] but pin is %FB_VER%, reinstalling
 set "FB_URL=https://downloads.php.net/~windows/pecl/releases/%FB_EXT%/%FB_VER%/php_%FB_EXT%-%FB_VER%-%PHP_MM%-nts-vs17-x64.zip"
 echo [php] %FB_EXT% PECL 直下 (ext %FB_VER% / php %PHP_MM%)...
 wget.exe --no-hsts --hsts-file="%TMP_DIR%\.wget-hsts" --no-config --no-check-certificate -c -O "%TMP_DIR%\download\php-%FB_ZIP%.zip" "%FB_URL%"
@@ -152,12 +159,12 @@ if exist "%PHP_EXT_DIR%\%FB_DLL%" (
 	goto :eof
 )
 :pecl_dllmiss
-set "MSG1=[ERROR] %FB_EXT% 解压后未找到 %FB_DLL%，该扩展未安装。"
+set "MSG1=[ERROR] %FB_EXT% 解压后未找到 %FB_DLL%，该版本未安装。"
 echo !MSG1!
 echo %DATE% %TIME% [php] %FB_EXT% FAILED (dll missing in zip) >> "%TMP_DIR%\install.errors.log"
 goto pecl_disable
 :pecl_failed
-set "MSG1=[ERROR] %FB_EXT% 下载失败（php %PHP_MM% / ext %FB_VER%）！该扩展未安装。"
+set "MSG1=[ERROR] %FB_EXT% 下载失败（php %PHP_MM% / ext %FB_VER%）！该版本未安装。"
 echo !MSG1!
 echo %DATE% %TIME% [php] %FB_EXT% FAILED (PECL download) >> "%TMP_DIR%\install.errors.log"
 REM ---- keep the lines above this label 100% ASCII: cmd.exe locates a
@@ -192,12 +199,19 @@ REM -phpMM tag that disagrees with it is still reported before downloading;
 REM a plain tag carries no PHP minor, so there is nothing to compare.
 :install_xqkeji
 echo [php] ===^> step: xqkeji
-if exist "%PHP_EXT_DIR%\php_xqkeji.dll" (
+if "%CFG_xqkeji%"=="" goto xqkeji_nourl
+set "XQ_TAG=%CFG_xqkeji%"
+REM phpversion('xqkeji') reports a bare version (1.2.2) while the pin may carry
+REM a leading v and a legacy -phpMM suffix, so normalize the pin before comparing.
+set "XQ_WANT=%XQ_TAG%"
+if /i "%XQ_WANT:~0,1%"=="v" set "XQ_WANT=%XQ_WANT:~1%"
+for /f "tokens=1 delims=-" %%v in ("%XQ_WANT%") do set "XQ_WANT=%%v"
+if exist "%PHP_EXT_DIR%\php_xqkeji.dll" call :ext_version xqkeji
+if exist "%PHP_EXT_DIR%\php_xqkeji.dll" if "!EXT_VER!"=="!XQ_WANT!" (
 	echo [php] xqkeji already present, skip
 	goto :eof
 )
-if "%CFG_xqkeji%"=="" goto xqkeji_nourl
-set "XQ_TAG=%CFG_xqkeji%"
+if exist "%PHP_EXT_DIR%\php_xqkeji.dll" echo [php] xqkeji installed version [!EXT_VER!] but pin is !XQ_WANT!, reinstalling
 REM Last-resort source only: rungs 1-2 below use the gitcode URLs inline.
 set "PHP_XQKEJI_DOWNLOAD_URL=https://github.com/xqkeji/php-xqkeji/archive/refs/tags/%XQ_TAG%.zip"
 set "MSG1=[php] xqkeji 标签 = %XQ_TAG% (wnmmp.ini, php %PHP_MM%)"
@@ -303,7 +317,7 @@ REM ----
 REM ----
 REM ----
 :xqkeji_failed
-set "MSG1=[ERROR] php_xqkeji 三个源（gitcode 归档 / gitcode 克隆 / GitHub 归档）都未取到 DLL，该扩展未安装。"
+set "MSG1=[ERROR] php_xqkeji 三个源（gitcode 归档 / gitcode 克隆 / GitHub 归档）都未取到 DLL，该版本未安装。"
 echo !MSG1!
 echo %DATE% %TIME% [php] xqkeji FAILED (all sources) >> "%TMP_DIR%\install.errors.log"
 goto xqkeji_disable
@@ -333,10 +347,22 @@ REM missing module (which otherwise prints "Unable to load dynamic library"
 REM warnings at every php invocation). Uses findstr /v (exact-line match) which
 REM safely preserves blank lines and existing ";" comments -- it only drops the
 REM one active line. Args: %1 = extension short name.
+REM Keeps the line when php.exe still reports a version for the extension, so a
+REM failed upgrade cannot disable an older DLL that still works.
 :disable_ext
 set "DE_NAME=%~1"
 set "INI=%HOME_DIR%\etc\php\php.ini"
 if not exist "%INI%" goto :eof
+REM A failed upgrade leaves the OLD DLL in place (it is only overwritten on
+REM success), so ask php.exe whether the extension still loads before pulling
+REM its enable line: a working older build beats a disabled extension.
+call :ext_version %DE_NAME%
+if not "!EXT_VER!"=="" (
+	set "MSG1=[php] 扩展 %DE_NAME% 旧版本 !EXT_VER! 仍可用，保留启用行（新版本未取到）"
+	echo !MSG1!
+	echo %DATE% %TIME% [php] %DE_NAME% kept enabled at !EXT_VER! >> "%TMP_DIR%\install.progress.log"
+	goto :eof
+)
 set "TMPINI=%TMP_DIR%\_phpini.tmp"
 findstr /v /x /c:"extension=%DE_NAME%" "%INI%" > "%TMPINI%"
 findstr /v /x /c:"zend_extension=%DE_NAME%" "%TMPINI%" > "%INI%"
@@ -387,4 +413,23 @@ REM ----
 for /r "%XQ_DIR_TMP%" %%d in (*php_xqkeji.dll) do (
 	if not defined FOUND_DLL set "FOUND_DLL=%%d"
 )
+goto :eof
+
+
+REM ===================== helper :ext_version =====================
+REM Sets EXT_VER to the version php.exe actually reports for extension %1.
+REM Empty means "not loaded" (DLL missing, enable line removed by :disable_ext,
+REM or php.exe unavailable); the caller then re-installs instead of skipping.
+REM display_errors is off and stderr dropped so a PHP startup warning can never
+REM become the first line that set /p reads.
+REM ---- keep the lines above this label 100% ASCII (see :xqkeji_tag_ok).
+REM ----
+REM ----
+REM ----
+:ext_version
+set "EXT_VER="
+if not exist "%PHP_DIR%\php.exe" goto :eof
+"%PHP_DIR%\php.exe" -d display_errors=0 -r "echo phpversion('%~1');" > "%TMP_DIR%\ext_ver.txt" 2>nul
+if not exist "%TMP_DIR%\ext_ver.txt" goto :eof
+set /p EXT_VER=<"%TMP_DIR%\ext_ver.txt"
 goto :eof
